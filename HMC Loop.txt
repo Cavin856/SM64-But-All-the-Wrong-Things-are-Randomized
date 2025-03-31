@@ -131,12 +131,19 @@ FM_Seg7_HMC:
 	LW AT, @offset_z
 	ADDU AT, T9, AT
 	SH AT, 0x4 (T0)			// Z
-@@hacky_sanity_check:			// to make entering CotMC possible with as little effort as possible
 	ADDIU T0, T0, 0x6
 	SW T0, 0x10 (SP)		// address of vertices
 	ADDIU T1, T1, 1			// increment vertex count
 	SW T1, 0x14 (SP)
 	B @geo
+	OR T1, R0, R0
+
+@@hacky_sanity_check:			// to make entering CotMC possible with as little effort as possible
+	ADDIU T0, T0, 0x6
+	SW T0, 0x10 (SP)		// address of vertices
+	ADDIU T1, T1, 1			// increment vertex count
+	SW T1, 0x14 (SP)
+	B @generate_offsets
 	OR T1, R0, R0
 
 @geo:
