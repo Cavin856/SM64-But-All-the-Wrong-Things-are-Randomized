@@ -1,0 +1,56 @@
+@terrain_offsets:
+.dh 0xD78		// SURFACE_DEFAULT
+.dh 0x1016		// SURFACE_VERY_SLIPPERY
+.dh 0x129A		// SURFACE_INSTANT_QUICKSAND
+.dh -1
+.aligna
+
+@terrain_list:
+.db 0x00		// SURFACE_DEFAULT
+.db 0x13		// SURFACE_VERY_SLIPPERY
+.db 0x14		// SURFACE_SLIPPERY
+.db 0x15		// SURFACE_NOT_SLIPPERY
+.db 0x21		// SURFACE_SHALLOW_QUICKSAND
+.db 0x22		// SURFACE_DEEP_QUICKSAND
+.db 0x23		// SURFACE_INSTANT_QUICKSAND
+.aligna
+
+
+
+FM_Seg7_SSL_Sand:
+	LHU T0, 0x0 (T6)		// Sanity check
+	ORI AT, R0, 0x23E
+	ADDIU SP, SP, -0x28
+	SW V0, 0x20 (SP)
+	SW V1, 0x24 (SP)
+	BNE AT, T0, @end
+	SW RA, 0x1C (SP)
+	B @terrain_loop
+	OR T3, R0, R0
+
+@end:
+	LW V1, 0x24 (SP)
+	LW V0, 0x20 (SP)
+	LW RA, 0x1C (SP)
+	JR RA				// return
+	ADDIU SP, SP, 0x28
+
+@terrain_loop:
+	SW T3, 0x10 (SP)		// loop count
+	ORI A0, R0, 7			// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, 0			// offset, 	0 to 0
+	LW T3, 0x10 (SP)		// loop count
+	LI T0, 0x8010B0E0		// start of ssl segment
+	LI T1, @terrain_offsets
+	ADDU T1, T1, T3
+	LH T4, 0x0 (T1)			// terrain offset
+	BLTZ T4, @end
+	NOP
+	ADDU T4, T0, T4			// terrain pointer
+	LI T2, @terrain_list
+	ADDU T5, T2, V0
+	LBU T6, 0x0 (T5)		// terrain from list
+	SH T6, 0x0 (T4)
+	B @terrain_loop
+	ADDIU T3, T3, 0x2		// increment loop count

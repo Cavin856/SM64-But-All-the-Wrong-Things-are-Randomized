@@ -1,0 +1,98 @@
+@sGameSpeed:
+.dw 0x00080001
+
+FM_Game_Speed_Init:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	
+	LW AT, cGameSpeedEnable
+	BEQZ AT, @@end
+	
+	LI A0, cGameSpeedRange
+	JAL FH_Random_Range_From_Config
+	NOP
+	SLL V0, V0, 16
+	SW V0, @sGameSpeed
+	
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+FM_Game_Speed:
+	LW AT, cGameSpeedEnable
+	BEQZ AT, @@end
+	
+	LI A0, cGameSpeedCourses
+	JAL FH_Check_Config_Enabled_Courses
+	NOP
+	BEQZ V0, @@end
+	
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 19			// Secret Slide fails the sanity check, but it doesn't need it since no star select
+	BEQ AT, T0, @@skip_sanity_check
+	
+	LW T0, 0x8033B438		// seg E address
+	LUI AT, 0x8000
+	ADDU T0, T0, AT
+	LHU T0, 0x0 (T0)
+	ORI AT, R0, 0x1B04		// sanity check
+	BEQ AT, T0, @@end
+	NOP
+@@skip_sanity_check:
+	
+	
+	LUI T9, 0x8034
+	LW T8, 0xB17C (T9)		// m->action
+	ORI AT, R0, 0x1300		// ACT_DISAPPEARED
+	BEQ AT, T8, @@end		// branch if ACT_DISAPPEARED to make warp transitions smoother
+	NOP
+	LW T0, @sGameSpeed
+@@throttle:
+	NOP
+	NOP
+	BGEZ T0, @@throttle
+	ADDIU T0, T0, -1
+@@end:
+	J 0x80248B70			// return
+	NOP
+
+
+
+FF_Game_Speed_Limit_Skip:
+	LW AT, cGameSpeedEnable
+	BEQZ AT, @@end
+	ADDIU SP, SP, -0x18
+	
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 19			// Secret Slide fails the sanity check, but it doesn't need it since no star select
+	BEQ AT, T0, @@skip_sanity_check
+	
+	LW T0, 0x8033B438		// seg E address
+	LUI AT, 0x8000
+	ADDU T0, T0, AT
+	LHU T0, 0x0 (T0)
+	ORI AT, R0, 0x1B04		// sanity check
+	BEQ AT, T0, @@end
+	NOP
+@@skip_sanity_check:
+	
+	SW RA, 0x14 (SP)
+	SW A0, 0x10 (SP)
+	LI A0, cGameSpeedCourses
+	JAL FH_Check_Config_Enabled_Courses
+	NOP
+	LW A0, 0x10 (SP)
+	BEQZ V0, @@end
+	LW RA, 0x14 (SP)
+	LUI T9, 0x8034
+	LW T8, 0xB17C (T9)		// m->action
+	ORI AT, R0, 0x1300		// ACT_DISAPPEARED
+	BEQ AT, T8, @@end		// branch if ACT_DISAPPEARED to make warp transitions smoother
+	NOP
+	JR RA				// skip fps limit
+	ADDIU SP, SP, 0x18
+@@end:
+	J 0x80322800			// normalize
+	ADDIU SP, SP, 0x18

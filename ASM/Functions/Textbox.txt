@@ -1,0 +1,55 @@
+// Handles replacing vanilla textboxes with our own under various circumstances
+
+FM_Replace_Textbox:
+	LI T0, Master_Dialog_Replacement_Table
+
+@master_loop:
+	LW T1, 0x0 (T0)
+	BEQZ T1, @end
+	NOP
+	LW AT, 0x0 (T1)			// condition
+	JALR AT
+	ORI V1, R0, 0
+	BEQZ V1, @master_loop_next
+	ORI T2, R0, 0x8
+	LH T4, 0x80331484		// gDialogID
+	
+@dialog_loop:
+	ADDU AT, T2, T1
+	LH AT, 0x0 (AT)			// dialog ID to check
+	BLTZ AT, @master_loop_next
+	NOP
+	BEQ AT, T4, @replace_dialog
+	NOP
+	B @dialog_loop
+	ADDIU T2, T2, 0x2		// increment dialog pointer
+
+@master_loop_next:
+	B @master_loop
+	ADDIU T0, T0, 0x4		// increment table pointer
+	
+	
+@replace_dialog:
+	LW V0, 0x4 (T1)			// replacement dialog struct
+	SW V0, 0x30 (SP)
+@end:
+	LUI S0, 0x8033			// normalize
+	J 0x802DA218			// return
+	LB S0, 0x1470 (S0)		// normalize
+
+
+
+
+FC_Ice_Sign:
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T9, @@end
+	LW T9, gSLTemperatureRaw
+	ORI AT, R0, 0xC000
+	SUB T9, T9, AT
+	BLTZ T9, @@end
+	NOP
+	ORI V1, R0, 1
+@@end:
+	JR RA
+	NOP

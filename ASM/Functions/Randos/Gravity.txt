@@ -1,0 +1,184 @@
+// Randomizes the strength of the gravity
+
+@sGravityStrength:
+.dw 0
+
+
+FM_Gravity_Init:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL 0x80383CB4			// random_float
+	NOP
+	LI A0, cGravityRange
+	JAL FH_Random_Float_Range_From_Config
+	NOP
+	SWC1 F0, @sGravityStrength
+	
+	LI T1, 1150.0			// small fall damage height
+	MTC1 T1, F2
+	LI T2, 3000.0			// big fall damage height
+	MTC1 T2, F4
+	LI T3, 0x80336C04		// address of fall damage floats
+	LI A0, cGravityCourses
+	JAL FH_Check_Config_Enabled_Courses
+	NOP
+	BEQZ V0, @@end
+	NOP
+	DIV.S F2, F2, F0
+	DIV.S F4, F4, F0
+@@end:
+	SWC1 F2, 0x0 (T3)		// small fall damage height
+	SWC1 F4, 0x4 (T3)		// big fall damage height
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+FM_Gravity:
+	LW AT, cGravityEnabled
+	BEQZ AT, @@return
+	LI A0, cGravityCourses
+	JAL FH_Check_Config_Enabled_Courses
+	NOP	
+	BEQZ V0, @@return
+
+	LUI T9, 0x8034
+	LW T8, 0xB17C (T9)		// m->action
+	LI T1, -1.0
+	LI T2, -75.0
+	LI AT, 0x00880898		// ACT_SHOT_FROM_CANNON
+	BEQ AT, T8, @@apply_gravity
+	NOP
+	
+	LI T1, -2.0
+	LI AT, 0x03000888		// ACT_LONG_JUMP
+	BEQ AT, T8, @@apply_gravity
+	NOP
+	LI AT, 0x018008AA		// ACT_SLIDE_KICK
+	BEQ AT, T8, @@apply_gravity
+	NOP
+	LI AT, 0x00001535		// ACT_BBH_ENTER_SPIN
+	BEQ AT, T8, @@apply_gravity
+	NOP
+	
+	LI T1, 0x8033B170
+	LW T1, 0xC4 (T1)		// m->gettingBlownGravity
+	LI AT, 0x010208B8		// ACT_GETTING_BLOWN
+	BEQ AT, T8, @@apply_gravity
+	NOP
+	
+	LI T1, -3.2
+	LI T2, -65.0
+	LI AT, 0x00001904		// ACT_FALL_AFTER_STAR_GRAB
+	BEQ AT, T8, @@apply_gravity
+	NOP
+	LI AT, 0x010208B7		// ACT_LAVA_BOOST
+	BEQ AT, T8, @@apply_gravity
+	NOP
+
+	JAL 0x80256584			// should_strengthen_gravity_for_jump_ascent
+	ADDIU A0, T9, 0xB170
+	LUI T9, 0x8034
+	LW T8, 0xB17C (T9)		// m->action
+	BNEZ V0, @@jump_ascent
+	NOP
+	
+	LW T7, 0xB174 (T9)		// m->flags
+	ANDI AT, T7, 0x8		// MARIO_WING_CAP
+	BNEZ AT, @@wing_cap
+	NOP
+@@not_wing_cap:
+	LI T1, -1.6
+	LI T2, -16.0
+	ANDI AT, T8, 0x4000		// ACT_FLAG_METAL_WATER
+	BNEZ AT, @@apply_gravity
+	NOP
+	LI T1, -4.0
+	LI T2, -75.0
+	
+@@apply_gravity:
+	LWC1 F2, @sGravityStrength
+	MTC1 T1, F4
+	MTC1 T2, F6
+	MUL.S F4, F2, F4
+	ADD.S F6, F2, F6
+	LWC1 F0, 0xB1BC (T9)		// y vel
+	ADD.S F0, F0, F4
+	C.LT.S F0, F6
+	BC1F @@accelerate
+	NOP
+	MOV.S F0, F6
+@@accelerate:
+	SWC1 F0, 0xB1BC (T9)		// y vel
+@@end:
+	J 0x802569E8			// skip to end
+	NOP
+
+@@return:
+	LI A0, 0x8033B170
+	LW T6, 0x18 (SP)		// normalize
+	J 0x80256630			// return
+	LUI AT, 0x1080			// normalize
+
+@@jump_ascent:
+	LWC1 F0, 0xB1BC (T9)		// y vel
+	LI AT, 0.75
+	MTC1 AT, F4
+	LI AT, 1.0
+	MTC1 AT, F6
+	LWC1 F2, @sGravityStrength
+	MUL.S F4, F4, F2
+	SUB.S F6, F6, F4		// 1 - 0.75 * gravity
+	B @@accelerate
+	MUL.S F0, F0, F6
+
+@@wing_cap:
+	LHU T7, 0xB172 (T9)		// m->input
+	ANDI AT, T7, 0x80		// INPUT_A_DOWN
+	BEQZ AT, @@not_wing_cap
+	LWC1 F0, 0xB1BC (T9)		// y vel
+	MTC1 R0, F10
+	C.LT.S F10, F0
+	BC1T @@not_wing_cap
+
+	LW T0, 0xB208 (T9)		// m->marioBodyState
+	ORI AT, R0, 0x1
+	SB AT, 0x7 (T0)			// marioBodyState->wingFlutter
+
+	LI T1, -2.0
+	LI T2, -37.5
+	LWC1 F2, @sGravityStrength
+	MTC1 T1, F4
+	MTC1 T2, F6
+	MUL.S F4, F2, F4
+	ADD.S F6, F2, F6
+	LWC1 F0, 0xB1BC (T9)		// y vel
+	ADD.S F0, F0, F4
+	C.LT.S F0, F6
+	BC1F @@accelerate
+	NOP
+	LI T1, 4.0
+	MTC1 T1, F4
+	// MUL.S F4, F2, F4		// don't multiply by gravity modifier because this is kind of like air resistance and not gravity?
+	ADD.S F0, F0, F4
+	C.LT.S F6, F0
+	BC1F @@accelerate
+	NOP
+	B @@accelerate
+	MOV.S F0, F6
+
+
+/* unused, found a better method
+// apply gravity modifier to fall damage height
+FM_Gravity_Fall_Damage:
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 0x2
+	BNE AT, T9, @@end
+	NOP
+	LWC1 F2, @sGravityStrength
+	MUL.S F8, F8, F2
+	@@end:
+	SWC1 F8, 0x2C (SP)		// normalize
+	J 0x8026A250			// return
+	LW T7, 0x30 (SP)		// normalize
+*/

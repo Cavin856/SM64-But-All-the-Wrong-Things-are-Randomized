@@ -1,0 +1,43 @@
+// Changes level terrain type
+FM_Change_Level_Terrain_Type:
+	ADDIU SP, SP, -0x20
+	SW RA, 0x1C (SP)
+	SW T0, 0x10 (SP)
+
+	LI AT, cSLColdEffects
+	LBU AT, 0x2 (AT)
+	BNEZ AT, @@sl
+	SW T1, 0x14 (SP)
+	
+@@sl_return:
+	LW AT, cTerrainEnable
+	BEQZ AT, @@end
+	LI A0, cTerrainCourses
+	JAL FH_Check_Config_Enabled_Courses
+	NOP
+	BEQZ V0, @@end
+	ORI A0, R0, 7			// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, 0			// offset, 	2 to 6
+	OR T3, R0, V0
+@@end:
+	LW T0, 0x10 (SP)
+	LW T1, 0x14 (SP)
+	LW RA, 0x1C (SP)
+	ADDIU SP, SP, 0x20
+	OR T4, T1, T3			// normalize
+	J 0x8037F96C			// return
+	SH T4, 0x2 (T0)			// normalize
+
+@@sl:
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE T0, AT, @@sl_return
+	NOP
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqNotSnowyTempW
+	SUB T0, T0, AT
+	BGEZ T0, @@end
+	NOP
+	B @@end
+	OR T3, R0, R0

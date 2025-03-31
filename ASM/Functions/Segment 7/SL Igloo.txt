@@ -1,0 +1,116 @@
+@igloo_col_coords:
+.db 73
+.db 74
+.db 79
+.db 81
+.db 87
+.db 90
+.db 92
+.db 94
+.db 97
+.db 99
+.db 103
+.db 172
+.db 175
+.db 78
+.db 102
+.db 76
+.db 84
+.db 86
+.db 95
+.db 96
+.db 101
+.db 168
+.db 171
+.db 77
+.db 164
+.db 169
+.db 176
+.db 177
+.db 75
+.db 82
+.db 83
+.db 85
+.db 165
+.db 170
+.db 166
+.db 163
+
+.db -1
+.aligna
+
+
+
+FM_Seg7_SL_Igloo:
+	LHU T0, 0x0 (T6)		// Sanity check
+	ORI AT, R0, 0x202
+	BNE AT, T0, @end
+	NOP
+	LI T0, cSLColdEffects
+	LBU AT, 0x6 (T0)
+	BEQZ AT, @end
+	NOP
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqIglooMeltW
+	SUB T0, T0, AT
+	BLEZ T0, @igloo_col_init
+	NOP
+
+@end:
+	JR RA				// return
+	NOP
+
+
+
+@igloo_col_init:
+	LI T0, @igloo_col_coords
+	LI T1, 0x80107B4C		// segment 7 SL
+@igloo_col_loop:
+	LBU T2, 0x0 (T0)		// vertex ID
+	ORI AT, R0, 0xFF
+	BEQ T2, AT, @igloo_geo_init
+	SLL AT, T2, 1
+	ADDU AT, AT, T2
+	SLL AT, AT, 1			// multiply by 6
+	ADDU T3, T1, AT			// address of target vertex
+	ORI T8, R0, 2150
+	SH T8, 0x2 (T3)			// set Y to floor
+	B @igloo_col_loop
+	ADDIU T0, T0, 0x1
+
+
+
+@igloo_geo_init:
+	LI T0, 0x800FAF70		// seg7 sl geo address
+	ADDIU T1, T0, 0x3510
+	ADDIU T2, T0, 0x3820
+@igloo_geo_loop:
+	BEQ T1, T2, @igloo_geo_init2
+	LH T3, 0x2 (T1)
+	ADDIU T3, T3, -100
+	SH T3, 0x2 (T1)
+	B @igloo_geo_loop
+	ADDIU T1, T1, 0x10
+
+@igloo_geo_init2:
+	ADDIU T1, T0, 0x4750
+	ADDIU T2, T0, 0x4830
+@igloo_geo_loop2:
+	BEQ T1, T2, @igloo_geo_init3
+	LH T3, 0x2 (T1)
+	ADDIU T3, T3, -100
+	SH T3, 0x2 (T1)
+	B @igloo_geo_loop2
+	ADDIU T1, T1, 0x10
+	
+	
+@igloo_geo_init3:
+	ADDIU T1, T0, 0x4620
+	ADDIU T2, T0, 0x4670
+@igloo_geo_loop3:
+	BEQ T1, T2, @end
+	LH T3, 0x2 (T1)
+	ADDIU T3, T3, -100
+	SH T3, 0x2 (T1)
+	B @igloo_geo_loop3
+	ADDIU T1, T1, 0x10

@@ -1,0 +1,192 @@
+@col_vertex:
+.dh 186		// 4250, 3072, 1127
+.dh 187		// 4250, 3072, 1332
+.dh 188		// 4454, 3072, 1127
+.dh 189		// 3584, 3072, 2560
+.dh 190		// 5120, 3072, 2560
+.dh 191		// 5888, 3072, 1230
+.dh 235		// 3584, 3072, -99
+.dh 236		// 2816, 3072, 1230
+.dh 237		// 5120, 3072, -99
+.dh 238		// 4454, 3072, 1332
+.dh 372		// 4454, 2560, 1127
+.dh 468		// 4352, 2048, 1230
+.dh 469		// 3776, 2560, 2227
+.dh 470		// 4928, 2560, 2227
+.dh 471		// 3200, 2560, 1230
+.dh 472		// 5504, 2560, 1230
+.dh 473		// 4928, 2560, 232
+.dh 474		// 3776, 2560, 232
+.dh 481		// 4250, 2560, 1127
+.dh 482		// 4250, 2560, 1332
+.dh 483		// 4454, 2560, 1332
+.dh 1656	// bubbly tree
+.dh -1
+.aligna
+
+@geo_seg_addresses:
+.dh 0x2818	// start
+.dh 0x3CA8	// end
+.dh 0x4490	// start
+.dh 0x8AF0	// end
+.dh 0x9E98	// start
+.dh 0xA318	// end
+.dh 0xA4E0	// start
+.dh 0xA800	// end
+.dh 0xAA10	// start
+.dh 0xCFC0	// end
+.dh 0xDE48	// start
+.dh 0xE1E8	// end
+.aligna
+
+@macro_objects:
+.dh 17		// cannon
+.dh 36		// red coin
+.dh 45		// wing cap box
+.dh 58		// sign 1
+.dh 74		// sign 2
+.dh 84		// star box
+.aligna
+
+@sGeoRandom1:
+.dw 0
+@sGeoRandom2:
+.dw 0
+@sGeoRandom3:
+.dw 0
+
+FM_Bob_Island_Init:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	ORI A0, R0, 13312		// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, -11008		// offset, 	+2304 to -11008
+	SW V0, @sGeoRandom1
+	
+	ORI A0, R0, 9726		// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, -798		// offset, 	+8928 to -798
+	SW V0, @sGeoRandom2
+
+	ORI A0, R0, 13725		// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, -8093		// offset, 	+5631 to -8093
+	SW V0, @sGeoRandom3
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+FM_Seg7_BOB:
+	LHU T0, 0x0 (T6)		// Sanity check
+	ORI AT, R0, 0x23A
+	BNE AT, T0, @end
+	ADDIU SP, SP, -0x18
+	LW AT, cBOBIslandEnable
+	BEQZ AT, @end
+	NOP
+	SW T6, 0x10 (SP)
+	B @col_loop
+	SW R0, 0x14 (SP)
+
+@end:
+	ADDIU SP, SP, 0x18
+	JR RA				// return
+	NOP
+
+
+@col_loop:
+	LI T0, @col_vertex
+	LW T1, 0x14 (SP)
+	ADDU AT, T0, T1
+	LHU T2, 0x0 (AT)		// vertex ID
+	ORI AT, R0, 0xFFFF
+	BEQ AT, T2, @macro_start
+	SLL AT, T2, 1
+	ADDU AT, AT, T2
+	SLL AT, AT, 1			// multiply by 6
+	LW T0, 0x10 (SP)		// address of vertices
+	ADDU T3, AT, T0			// address of target vertex triple
+	LH T7, 0x2 (T3)			// X
+	LH T8, 0x4 (T3)			// Y
+	LH T9, 0x6 (T3)			// Z
+	LW AT, @sGeoRandom1
+	ADDU AT, T7, AT
+	SH AT, 0x2 (T3)			// X
+	LW AT, @sGeoRandom2
+	ADDU AT, T8, AT
+	SH AT, 0x4 (T3)			// Y
+	LW AT, @sGeoRandom3
+	ADDU AT, T9, AT
+	SH AT, 0x6 (T3)			// Z
+	ADDIU T1, T1, 0x2
+	SW T1, 0x14 (SP)
+	B @geo
+	OR T1, R0, R0
+
+@geo:
+	ORI AT, R0, 0x6
+	BEQ AT, T1, @col_loop
+	NOP
+	LI T0, @geo_seg_addresses
+	SLL AT, T1, 2
+	ADDU AT, T0, AT
+	LHU T2, 0x0 (AT)		// segment offset start
+	LHU T3, 0x2 (AT)		// segment offset end
+	LW T0, 0x8033B41C		// segment 7 location
+	LUI AT, 0x8000
+	ADDU AT, AT, T0			// segment 7
+	ADDU T0, AT, T2			// range start address
+	ADDU T3, AT, T3			// range end address
+	ADDIU T1, T1, 0x1
+@geo_loop:
+	BEQ T0, T3, @geo
+	NOP
+	LH T4, 0x0 (T0)			// X
+	BNE T4, T7, @geo_loop_end
+	LH T5, 0x2 (T0)			// Y
+	BNE T5, T8, @geo_loop_end
+	LH T6, 0x4 (T0)			// Z
+	BNE T6, T9, @geo_loop_end
+	NOP
+	LW AT, @sGeoRandom1
+	ADDU AT, AT, T4
+	SH AT, 0x0 (T0)			// X
+	LW AT, @sGeoRandom2
+	ADDU AT, AT, T5
+	SH AT, 0x2 (T0)			// Y
+	LW AT, @sGeoRandom3
+	ADDU AT, AT, T6
+	SH AT, 0x4 (T0)			// Z
+@geo_loop_end:
+	B @geo_loop
+	ADDIU T0, T0, 0x10
+
+@macro_start:
+	OR T1, R0, R0
+	LW T3, 0x8033B41C		// segment 7 location
+	LI AT, 0x8001104C
+	ADDU T3, AT, T3			// offset to macro objects
+@macro_loop:
+	LI T0, @macro_objects
+	ORI AT, R0, 0xC
+	BEQ AT, T1, @end
+	ADDU AT, T0, T1
+	LHU T2, 0x0 (AT)		// object ID
+	SLL AT, T2, 2
+	ADDU AT, AT, T2	
+	SLL AT, AT, 1			// multiply by 10
+	ADDU T2, T3, AT			// macro object address
+	LH T7, 0x2 (T2)			// X
+	LH T8, 0x4 (T2)			// Y
+	LH T9, 0x6 (T2)			// Z
+	LW AT, @sGeoRandom1
+	ADDU AT, T7, AT
+	SH AT, 0x2 (T2)			// X
+	LW AT, @sGeoRandom2
+	ADDU AT, T8, AT
+	SH AT, 0x4 (T2)			// Y
+	LW AT, @sGeoRandom3
+	ADDU AT, T9, AT
+	SH AT, 0x6 (T2)			// Z
+	B @macro_loop
+	ADDIU T1, T1, 0x2

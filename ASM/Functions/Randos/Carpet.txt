@@ -1,0 +1,98 @@
+@targets:
+.dh 0		// always 0
+@target_x:
+.dh 0
+@target_y:
+.dh 0
+@target_z:
+.dh 0
+
+FM_Random_Carpet_Trajectory:
+	ADDIU SP, SP, -0x28
+	SW RA, 0x10 (SP)
+	SW S0, 0x14 (SP)
+	SW S1, 0x24 (SP)
+	OR S0, R0, A0
+	JAL FM_Random_RR_Pos_In_Zone
+	ADDIU A0, S0, 0x2
+	
+@@target:
+	ADDIU A0, R0, 16384
+	JAL FH_Random_Range
+	ADDIU A1, R0, -8192
+	SH V0, @target_x		// x
+	ADDIU A0, R0, 16384
+	JAL FH_Random_Range
+	ADDIU A1, R0, -8192
+	SH V0, @target_z		// z
+	ADDIU A0, R0, 12000
+	JAL FH_Random_Range
+	ADDIU A1, R0, -4800
+	SH V0, @target_y		// y
+	
+@@loop:
+	ORI S1, R0, 0x2
+@@subloop:
+	LI AT, @targets
+	ADDU AT, AT, S1
+	LH T2, 0x0 (AT)			// target pos
+	ADDU AT, S0, S1
+	LH T1, 0x0 (AT)			// current traj pos
+	SUBU T3, T2, T1			// difference to target pos
+	SRL T3, T3, 3
+	ADDU T4, T1, T3			// range is weighted to go closer to target
+	ADDIU A0, R0, 2001
+	JAL FH_Random_Range
+	ADDIU A1, T4, -1000
+	ADDU T0, S0, S1
+	SH V0, 0x8 (T0)			// next traj pos
+	ORI AT, R0, 0x6
+	BNE AT, S1, @@subloop
+	ADDIU S1, S1, 0x2
+
+	ADDIU S0, S0, 0x8		// increment traj ID
+	LH T0, 0x0 (S0)			// traj ID
+	ORI AT, R0, 0x8
+	DIVU T0, AT
+	MFHI AT
+	BEQZ AT, @@target
+	NOP
+	BGEZ T0, @@loop
+	NOP
+	
+@@end:
+	LW S1, 0x24 (SP)
+	LW S0, 0x14 (SP)
+	LW RA, 0x10 (SP)
+	JR RA
+	ADDIU SP, SP, 0x28
+
+
+
+FM_Randomize_RR_Carpets:
+	ADDIU SP, SP, -0x30
+	SW RA, 0x10 (SP)
+
+	LI AT, cRRPlatformEnable
+	LBU AT, 0x2 (AT)
+	BEQZ AT, @@end
+	NOP
+	
+	LW T0, 0x80361160
+	LW AT, 0x1B0 (T0)		// oPlatformOnTrackType
+	BNEZ AT, @@end
+	
+	LI T9, 0x803329DC		// sPlatformOnTrackPaths
+	LBU T1, 0x189 (T0)		// bparam 2
+	SLL AT, T1, 2	
+	ADDU T9, T9, AT
+	JAL FH_Seg_to_Virtual
+	LW A0, 0x0 (T9)
+	
+	JAL FM_Random_Carpet_Trajectory
+	OR A0, R0, V0
+	
+@@end:
+	LW RA, 0x10 (SP)
+	JR RA
+	ADDIU SP, SP, 0x30

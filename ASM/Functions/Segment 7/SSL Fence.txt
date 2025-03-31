@@ -1,0 +1,552 @@
+@vertices:
+.dh 3433		// .Ax
+.dh 6692		// .Az
+.dh 500			// .Ah
+.dh 0			// .Af
+.dh 0			// |DA'dx	(does not exist)
+.dh 0			// |DA'dz	(does not exist)
+.dh 0			// |AB''dx
+.dh 0			// |AB''dz
+
+.dh 6263		// .Bx
+.dh 4101		// .Bz
+.dh 2000		// .Bh
+.dh 0			// .Bf
+.dh 0			// |AB'dx
+.dh 0			// |AB'dz
+.dh 0			// |BC''dx
+.dh 0			// |BC''dz
+
+.dh 3951		// .Cx
+.dh 2069		// .Cz
+.dh 200			// .Ch
+.dh 0			// .Cf
+.dh 0			// |BC'dx
+.dh 0			// |BC'dz
+.dh 0			// |CD''dx
+.dh 0			// |CD''dz
+
+.dh 7325		// .Dx
+.dh -176		// .Dz
+.dh 1400		// .Dh
+.dh 0			// .Df
+.dh 0			// |CD'dx
+.dh 0			// |CD'dz
+.dh 0			// |DA''dx	(does not exist)
+.dh 0			// |DA''dz	(does not exist)
+
+@col_vertices:
+.dh 0			// .A'x
+.dh 0			// .A'z
+.dh 0			// .A''x
+.dh 0			// .A''z
+.dh 0			// .B'x
+.dh 0			// .B'z
+.dh 0			// .B''x
+.dh 0			// .B''z
+.dh 0			// .C'x
+.dh 0			// .C'z
+.dh 0			// .C''x
+.dh 0			// .C''z
+.dh 0			// .D'x
+.dh 0			// .D'z
+.dh 0			// .D''x
+.dh 0			// .D''z
+
+@angles:
+.dh 0			// AB
+.dh 0			// BC
+.dh 0			// CD
+.aligna
+
+@col_vertex_IDs:
+.dh 499			// .A'		scrubbed
+.dh 496			// .A'f		scrubbed
+.dh 173			// .A''		replaced (originally 497)
+.dh 175			// .A''f	replaced (originally 111)
+
+.dh 494			// .B'		clean
+.dh 495			// .B'f		scrubbed
+.dh 493			// .B''		clean
+.dh 512			// .B''f	replaced (originally 113)
+
+//.dh 512		// .C^		scrubbed and donated
+.dh 489			// .C'		clean
+.dh 491			// .C'f		scrubbed
+.dh 488			// .C''		clean
+.dh 511			// .C''f	replaced (originally 114)
+
+//.dh 511		// .D^		scrubbed and donated
+.dh 492			// .D'		clean
+.dh 490			// .D'f		clean
+.dh 487			// .D'' 	clean
+.dh 486			// .D''f	clean
+
+
+
+@tri_replacements:	// could also replace 162 with 163 if another vertex is needed
+
+// replace 173 with 290
+.dh 290
+.dh 0x10DE
+.dh 290
+.dh 0x1A7C
+
+// replace 175 with 291
+.dh 291
+.dh 0x1062
+.dh 291
+.dh 0x1068
+.dh 291
+.dh 0x1A84
+.dh 291
+.dh 0x1A8A
+
+// replace .491 with .114 (except fence)
+.dh 114
+.dh 0xECC
+.dh 114
+.dh 0xED2
+
+// replace .495 with .113 (except fence)
+.dh 113
+.dh 0xED6
+.dh 113
+.dh 0xED8
+
+// replace .496 with .111 (except fence)
+.dh 111
+.dh 0x112C
+.dh 111
+.dh 0x1134
+
+// replace .499 with .497 (except fence)
+.dh 497
+.dh 0x112A
+.dh 497
+.dh 0x1132
+.dh 497
+.dh 0x1180
+.dh 497
+.dh 0x1186
+
+// scrub .C^ and .D^
+.dh 0
+.dh 0x103E
+.dh 0
+.dh 0x1040
+.dh 0
+.dh 0x1042
+.dh 489
+.dh 0x1048
+.dh 0
+.dh 0x104A
+.dh 0
+.dh 0x104C
+.dh 0
+.dh 0x104E
+.dh 487
+.dh 0x1050
+
+// donate .511 to .C''f
+.dh 511
+.dh 0x1990
+.dh 511
+.dh 0x1996
+.dh 511
+.dh 0x19B4
+.dh 511
+.dh 0x19BA
+
+// donate .512 to .B''f
+.dh 512
+.dh 0x19BE
+.dh 512
+.dh 0x19D2
+.dh 512
+.dh 0x19D8
+
+// donate .175 to .A''f
+.dh 175
+.dh 0x19D6
+
+// donate .173 to .A''
+.dh 173
+.dh 0x19D4
+.dh 173
+.dh 0x19DC
+.dh 173
+.dh 0x19DE
+.dh 173
+.dh 0x19E4
+
+.dh -1
+.aligna
+
+@donated_vertex_matchup:
+.dh 173
+.dh 497
+
+.dh 175
+.dh 111
+
+.dh 512
+.dh 113
+
+.dh 511
+.dh 114
+
+@geo_vertex_order:
+.dw 0x20060070		// .Cf
+.dw 0x10048080		// .Bh
+.dw 0x10068070		// .Bf
+.dw 0x20040080		// .Ch
+.dw 0x10060070		// .Bf
+.dw 0x00048080		// .Ah
+.dw 0x00068070		// .Af
+.dw 0x10040080		// .Bh
+.dw 0x20068070		// .Cf
+.dw 0x30040080		// .Dh
+.dw 0x20048080		// .Ch
+.dw 0x30060070		// .Df
+
+
+
+FM_Seg7_SSL_Fence:
+	LHU T0, 0x0 (T6)		// Sanity check
+	ORI T1, R0, 0x23E
+	ADDIU SP, SP, -0x48
+	SW V0, 0x20 (SP)
+	SW V1, 0x24 (SP)
+	SW S0, 0x10 (SP)
+	SW S1, 0x14 (SP)
+	SW S2, 0x18 (SP)
+	SW S3, 0x40 (SP)
+	LW AT, cSSLFenceEnable
+	BEQZ AT, @end
+	SW RA, 0x1C (SP)
+	BEQ T1, T0, @gen_points_init
+	NOP
+	
+@end:
+	LW S3, 0x40 (SP)
+	LW S2, 0x18 (SP)
+	LW S1, 0x14 (SP)
+	LW S0, 0x10 (SP)
+	LW V1, 0x24 (SP)
+	LW V0, 0x20 (SP)
+	LW RA, 0x1C (SP)
+	JR RA				// return
+	ADDIU SP, SP, 0x48
+
+
+
+@gen_points_init:
+	LI S0, @vertices
+	LI S1, @col_vertices
+	LI S2, @angles
+	//B @calc_angles_init		//debug
+	OR S3, R0, R0
+@gen_points_loop:
+	ORI AT, R0, 0x4
+	BEQ AT, S3, @calc_angles_init
+	ORI A0, R0, 16384		// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, -8192		// offset, 	8191 to -8192
+	SH V0, 0x0 (S0)			// x
+	ORI A0, R0, 16384		// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, -8192		// offset, 	8191 to -8192
+	SH V0, 0x2 (S0)			// z
+	ORI A0, R0, 3001		// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, 0			// offset, 	3000 to 0
+	SH V0, 0x4 (S0)			// h
+	LH AT, 0x0 (S0)			// x
+	MTC1 AT, F12
+	CVT.S.W F12, F12
+	LH AT, 0x4 (S0)			// h
+	MTC1 AT, F14
+	CVT.S.W F14, F14
+	LH AT, 0x2 (S0)			// z
+	MTC1 AT, F0
+	CVT.S.W F0, F0
+	JAL 0x80381794			// find_floor_height
+	MFC1 A2, F0
+	TRUNC.W.S F0, F0
+	MFC1 AT, F0
+	SH AT, 0x6 (S0)			// f
+	ADDIU S0, S0, 0x10
+	B @gen_points_loop
+	ADDIU S3, S3, 0x1
+
+
+
+@calc_angles_init:
+	LI S0, @vertices
+	OR S3, R0, R0
+@calc_angles_loop:
+	ORI AT, R0, 3
+	BEQ AT, S3, @calc_line_extensions_init
+	SLL AT, S3, 4
+	ADDU T0, S0, AT
+	LH AT, 0x0 (T0)
+	MTC1 AT, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x28 (SP)		// x1
+	LH AT, 0x2 (T0)
+	MTC1 AT, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x30 (SP)		// z1
+	LH AT, 0x10 (T0)
+	MTC1 AT, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x34 (SP)		// x2
+	LH AT, 0x12 (T0)
+	MTC1 AT, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x3C (SP)		// z2
+	SW R0, 0x2C (SP)		// y1
+	SW R0, 0x38 (SP)		// y2
+	ADDIU A0, SP, 0x28
+	JAL 0x8028AAD8			// calculate_yaw
+	ADDIU A1, SP, 0x34
+	SLL AT, S3, 1
+	ADDU AT, S2, AT
+	SH V0, 0x0 (AT)
+	B @calc_angles_loop
+	ADDIU S3, S3, 0x1
+
+
+
+@calc_line_extensions_init:		// with this method, the more extreme the angle change, the thinner the wall. Can clip through wall if thin enough, too hard to fix.
+	OR S3, R0, R0
+	OR T0, R0, S0
+	OR T2, R0, S2
+@calc_line_extensions_loop:
+	ORI AT, R0, 3
+	BEQ AT, S3, @calc_mid_col_points_init
+	NOP
+	LI A1, 100.0
+	LHU A0, 0x0 (T2)		// line angle
+	JAL FH_get_angle_componants	// this doesn't use any T or S registers :)
+	ADDIU A0, A0, 0xC000		// 90 right turn
+	TRUNC.W.S F0, F0
+	MFC1 AT, F0
+	SH AT, 0x18 (T0)
+	TRUNC.W.S F2, F2
+	MFC1 AT, F2
+	SH AT, 0x1A (T0)
+	LI A1, -100.0
+	LHU A0, 0x0 (T2)		// line angle (A0 didn't change, but for readability we'll load it again)
+	JAL FH_get_angle_componants
+	ADDIU A0, A0, 0x4000		// 90 left turn
+	TRUNC.W.S F0, F0
+	MFC1 AT, F0
+	SH AT, 0xC (T0)
+	TRUNC.W.S F2, F2
+	MFC1 AT, F2
+	SH AT, 0xE (T0)
+	ADDIU T0, T0, 0x10
+	ADDIU T2, T2, 0x2
+	B @calc_line_extensions_loop
+	ADDIU S3, S3, 0x1
+	
+
+
+@calc_mid_col_points_init:
+	OR S3, R0, R0
+	OR T0, R0, S0
+	OR T9, R0, S1
+@calc_mid_col_points_loop:
+	LH T1, 0x10 (T0)
+	LH T2, 0x12 (T0)
+	LH T3, 0x18 (T0)
+	LH T4, 0x1A (T0)
+	LH T5, 0x1C (T0)
+	LH T6, 0x1E (T0)
+	ADDU T7, T1, T3
+	ADDU T8, T1, T5
+	ADDU AT, T7, T8
+	SRL AT, AT, 1			// midpoint
+	SH AT, 0xC (T9)			// .B''x & .C''x
+	ADDU T7, T2, T4
+	ADDU T8, T2, T6
+	ADDU AT, T7, T8
+	SRL AT, AT, 1			// midpoint
+	SH AT, 0xE (T9)			// .B''z & .C''z
+	SUBU T7, T1, T3
+	SUBU T8, T1, T5
+	ADDU AT, T7, T8
+	SRL AT, AT, 1			// midpoint
+	SH AT, 0x8 (T9)			// .B'x & .C'x
+	SUBU T7, T2, T4
+	SUBU T8, T2, T6
+	ADDU AT, T7, T8
+	SRL AT, AT, 1			// midpoint
+	SH AT, 0xA (T9)			// .B'z & .C'z
+	ADDIU T0, T0, 0x10
+	BNEZ S3, @calc_end_col_points_init
+	ADDIU T9, T9, 0x8
+	B @calc_mid_col_points_loop
+	ADDIU S3, R0, 0x1
+
+
+
+@calc_end_col_points_init:
+	OR S3, R0, R0
+	OR T0, R0, S0
+	OR T9, R0, S1
+@calc_end_col_points_loop:
+	LHU T1, 0x0 (S2)		// angle
+	LHU T2, 0x0 (T0)		// Ax & Dx
+	LHU T3, 0x2 (T0)		// Az & Dz
+	LI A1, 100.0
+	JAL FH_get_angle_componants
+	ADDIU A0, T1, 0x4000
+	TRUNC.W.S F0, F0
+	MFC1 T4, F0
+	ADDU AT, T2, T4
+	SH AT, 0x0 (T9)			// store col point
+	TRUNC.W.S F2, F2
+	MFC1 T5, F2
+	ADDU AT, T3, T5
+	SH AT, 0x2 (T9)			// store col point
+	LI A1, 100.0
+	JAL FH_get_angle_componants
+	ADDIU A0, T1, -0x4000
+	TRUNC.W.S F0, F0
+	MFC1 T4, F0
+	ADDU AT, T2, T4
+	SH AT, 0x4 (T9)			// store col point
+	TRUNC.W.S F2, F2
+	MFC1 T5, F2
+	ADDU AT, T3, T5
+	SH AT, 0x6 (T9)			// store col point
+	ADDIU T0, T0, 0x30
+	BNEZ S3, @rearrange_tri_vertices_init
+	ADDIU S2, S2, 0x4
+	ADDIU T9, T9, 0x18
+	B @calc_end_col_points_loop
+	ADDIU S3, R0, 0x1
+
+
+
+@rearrange_tri_vertices_init:
+	LW T0, 0x8033B41C		// segment 7 location
+	LI AT, 0x8000FD80
+	ADDU T0, AT, T0			// segment 7 SSL offset
+	LI T1, @tri_replacements
+@rearrange_tri_vertices_loop:
+	LH T3, 0x0 (T1)			// replacement corner ID
+	BLTZ T3, @update_donated_vertices_init
+	LHU T4, 0x2 (T1)		// corner offset
+	ADDU T2, T4, T0
+	SH T3, 0x0 (T2)
+	B @rearrange_tri_vertices_loop
+	ADDIU T1, T1, 0x4
+
+
+
+// techinically this loop is unnecessary but for testing, it's convenient
+@update_donated_vertices_init:
+	OR S3, R0, R0
+	LI T1, @donated_vertex_matchup
+	ADDIU T0, T0, 0x4		// offset for convenience
+@update_donated_vertices_loop:
+	ORI AT, R0, 0x4
+	BEQ AT, S3, @move_fence_col_vertices_init
+	NOP
+	LHU T2, 0x0 (T1)		// to vertex
+	SLL AT, T2, 1
+	ADDU AT, AT, T2
+	SLL AT, AT, 1
+	ADDU T4, T0, AT
+	LHU T3, 0x2 (T1)		// from vertex
+	SLL AT, T3, 1
+	ADDU AT, AT, T3
+	SLL AT, AT, 1
+	ADDU T5, T0, AT
+	LH AT, 0x0 (T5)
+	SH AT, 0x0 (T4)
+	LH AT, 0x2 (T5)
+	SH AT, 0x2 (T4)
+	LH AT, 0x4 (T5)
+	SH AT, 0x4 (T4)
+	ADDIU T1, T1, 0x4
+	B @update_donated_vertices_loop
+	ADDIU S3, S3, 1
+
+
+
+@move_fence_col_vertices_init:
+	OR S3, R0, R0
+	OR T9, R0, R0
+	LI T1, @col_vertex_IDs
+	OR T2, R0, S0
+	OR T3, R0, S1
+@move_fence_col_vertices_loop:
+	ORI AT, R0, 0x4
+	BEQ AT, S3, @set_geo_vertices_init
+	NOP
+@@prime_loop:
+	LHU T4, 0x0 (T1)		// h vertex
+	SLL AT, T4, 1
+	ADDU AT, AT, T4
+	SLL AT, AT, 1
+	ADDU T4, T0, AT
+	LHU T5, 0x2 (T1)		// f vertex
+	SLL AT, T5, 1
+	ADDU AT, AT, T5
+	SLL AT, AT, 1
+	ADDU T5, T0, AT
+	LH AT, 0x0 (T3)			// x coord
+	SH AT, 0x0 (T4)
+	SH AT, 0x0 (T5)
+	LH AT, 0x2 (T3)			// z coord
+	SH AT, 0x4 (T4)
+	SH AT, 0x4 (T5)
+	LH AT, 0x4 (T2)			// h coord
+	SH AT, 0x2 (T4)
+	LH AT, 0x6 (T2)			// f coord
+	SH AT, 0x2 (T5)
+	XORI T9, T9, 1
+	ADDIU T1, T1, 0x4
+	BNEZ T9, @@prime_loop
+	ADDIU T3, T3, 0x4
+	ADDIU T2, T2, 0x10
+	B @move_fence_col_vertices_loop
+	ADDIU S3, S3, 1
+	
+
+@set_geo_vertices_init:
+	LW T0, 0x8033B41C		// segment 7 location
+	LI AT, 0x8000BAF0
+	ADDU T0, AT, T0			// segment 7 fence geo offset, 0x80106E50
+	OR S3, R0, R0
+	LI T1, @geo_vertex_order
+	OR T2, R0, S0
+@set_geo_vertices_loop:
+	ORI AT, R0, 12
+	BEQ AT, S3, @end
+	LBU AT, 0x0 (T1)		// vertex offset
+	ADDU T3, T2, AT			// vertex x,z coord offset
+	LBU AT, 0x1 (T1)		// height offset
+	ADDU T4, T3, AT			// vertex y coord offset
+	LH AT, 0x0 (T3)			// x coord
+	SH AT, 0x0 (T0)
+	LH AT, 0x2 (T3)			// z coord
+	SH AT, 0x4 (T0)
+	LH AT, 0x0 (T4)			// y coord
+	SH AT, 0x2 (T0)
+	LBU AT, 0x2 (T1)		// texture scale coordinate?
+	SLL AT, AT, 8
+	SH AT, 0x8 (T0)
+	LBU AT, 0x3 (T1)		// texture scale coordinate?
+	SLL AT, AT, 8
+	SH AT, 0xA (T0)
+	ADDIU T0, T0, 0x10
+	ADDIU T1, T1, 0x4
+	B @set_geo_vertices_loop
+	ADDIU S3, S3, 1
+	

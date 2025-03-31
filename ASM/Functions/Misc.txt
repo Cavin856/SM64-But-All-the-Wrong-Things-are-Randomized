@@ -1,0 +1,61 @@
+// Doesn't set Mario's height to floor height in HMC
+FF_HMC_Door_Anti_Downwarp:
+	ADDIU SP, SP, -0x18
+	SW A0, 0x14 (SP)
+	LW AT, 0x40 (A0)
+	SW AT, 0x10 (SP)	
+	JAL 0x802559B0			// stop_and_set_height_to_floor
+	NOP
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 0x6
+	BNE AT, T9, @@end
+	NOP
+	LUI T9, 0x8036
+	LW T9, 0x1158 (T9)
+	LW A0, 0x14 (SP)
+	LW AT, 0x10 (SP)
+	SW AT, 0x40 (A0)		// set mario's height to what it was before setting height to floor
+	SW AT, 0x24 (T9)		// set mario's gfx to match
+@@end:
+	J 0x80259314			// return
+	ADDIU SP, SP, 0x18
+
+
+
+// Scales the ukiki cage star height
+FF_TTM_Ukiki_Star:
+	LWC1 F0, gTTMScale
+	LI AT, -1200.0
+	MTC1 AT, F14
+	J 0x802AEA28			// return
+	MUL.S F14, F14, F0
+
+
+
+// Calls extra functions to apply to exclamation boxes
+FF_Exclamation_Extras:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Exclamation_Cold
+	NOP
+	JAL FM_Handle_Floating_General
+	ORI A0, R0, 4
+	JAL FM_Set_General_Size_Refresh
+	NOP
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+// Slightly adjusts the camera trigger for the RR window to make it easier to see while inside the window
+FF_House_Window_Cam_Trigger:
+	LW AT, cRRPlatformEnable	// enables if any of the RR platforms are randomized
+	BEQZ AT, @@end
+	NOP
+	LI T0, 0x8032E280
+	ADDIU AT, R0, -5400
+	SH AT, 0x0 (T0)
+@@end:
+	JR RA
+	NOP

@@ -1,0 +1,458 @@
+// THIS FILE CONTAINS SPOILERS FOR THE VARIOUS TYPES OF RANDOMIZATIONS IN THIS HACK
+
+// IT IS RECOMMENDED FOR YOUR FIRST PLAYTHROUGH THAT YOU PLAY THROUGH THIS HACK BLIND (WITHOUT SPOILERS)
+
+// READ AT YOUR OWN RISK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// (You can delete everything from this line upwards, if you like)
+
+// This file lets you customize various features of the rando
+// By default, most features are on with parameters set to the recommended settings
+// To apply this config, use armips to assemble the already patched rom with this file
+// This can be done any number of times to change the settings
+
+
+
+
+.orga 0x007FF000
+
+// GRAVITY RANDO
+// Randomizes the strength of gravity on Mario
+
+cGravityEnabled:
+.dw 1		// enable this rando?
+
+// The range of force of gravity, 1.0 is normal, 2.0 is double, 0 is no gravity (DO NOT set min to 0.0, game will crash if it rolls 0.0). Value needs to have a decimal.
+cGravityRange:
+.dw 2.0		// max gravity strength
+.dw 0.1		// min gravity strength
+
+// Which courses to enable this rando in, 0 is off, 1 is on
+cGravityCourses:
+.db 0		// Castle Grounds, Inside, and Courtyard
+.db 0		// Bob-omb Battlefield
+.db 1		// Whomp's Fortress
+.db 0		// Jolly Roger Bay
+.db 0		// Cool Cool Mountain
+.db 0		// Big Boo's Haunt
+.db 0		// Hazy Maze Cave
+.db 1		// Lethal Lava Land
+.db 0		// Shifting Sands Land
+.db 0		// Dire Dire Docks
+.db 0		// Snowman's Land
+.db 0		// Wet Dry World
+.db 0		// Tall Tall Mountain
+.db 0		// Tiny-Huge Island
+.db 0		// Tick Tock Clock
+.db 0		// Rainbow Ride
+.db 0		// Bowser in the Dark World
+.db 0		// Bowser in the Fire Sea
+.db 0		// Bowser in the Sky
+.db 0		// Princess's Secret Slide
+.db 0		// Cavern of the Metal Cap
+.db 0		// Tower of the Wing Cap
+.db 0		// Vanish Cap under the Moat
+.db 0		// Wing Mario over the Rainbow
+.db 0		// Secret Aquarium
+.aligna
+
+
+
+// TERRAIN RANDO
+// Randomizes terrain effects for each level
+// Possible options include various normal terrains, snow and sand terrains, and slide terrain
+
+cTerrainEnable:
+.dw 1		// enable this rando?
+
+// Which courses to enable this rando in, 0 is off, 1 is on
+cTerrainCourses:
+.db 0		// Castle Grounds, Inside, and Courtyard
+.db 0		// Bob-omb Battlefield
+.db 0		// Whomp's Fortress
+.db 0		// Jolly Roger Bay
+.db 1		// Cool Cool Mountain
+.db 0		// Big Boo's Haunt
+.db 0		// Hazy Maze Cave
+.db 0		// Lethal Lava Land
+.db 0		// Shifting Sands Land
+.db 0		// Dire Dire Docks
+.db 0		// Snowman's Land
+.db 0		// Wet Dry World
+.db 0		// Tall Tall Mountain
+.db 0		// Tiny-Huge Island
+.db 0		// Tick Tock Clock
+.db 0		// Rainbow Ride
+.db 0		// Bowser in the Dark World
+.db 0		// Bowser in the Fire Sea
+.db 0		// Bowser in the Sky
+.db 0		// Princess's Secret Slide
+.db 0		// Cavern of the Metal Cap
+.db 0		// Tower of the Wing Cap
+.db 0		// Vanish Cap under the Moat
+.db 0		// Wing Mario over the Rainbow
+.db 0		// Secret Aquarium
+.aligna
+
+
+
+// BOX HEIGHT RANDO
+// Randomizes the height of water boxes, toxic gas boxes, and mist boxes
+
+// enable which types of boxes?
+cBoxHeightType:
+.db 1		// water boxes (most courses)
+.db 0		// toxic gas boxes (HMC)
+.db 0		// mist boxes (JRB, HMC, and SSL)
+.aligna
+
+// The range change in height for each course,
+// for example, a max of 1000 and min of -2000 means the box will be within 1000 above and 2000 units below (inclusive) it's vanilla height
+cBoxHeightRange:
+.dh 0		// Castle max
+.dh 0		// Castle min
+.dh 0		// WF max
+.dh 0		// WF min
+.dh 1500		// JRB max
+.dh -3000		// JRB min
+.dh 0		// CCM max
+.dh 0		// CCM min
+.dh 0		// BBH max
+.dh 0		// BBH min
+.dh 0		// HMC max
+.dh 0		// HMC min
+.dh 0		// LLL max
+.dh 0		// LLL min
+.dh 0		// SSL max
+.dh 0		// SSL min
+.dh 0		// DDD max
+.dh 0		// DDD min
+.dh 0		// SL max
+.dh 0		// SL min
+.dh 0		// WDW max
+.dh 0		// WDW min
+.dh 0		// TTM max
+.dh 0		// TTM min
+.dh 0		// THI max
+.dh 0		// THI min
+.dh 0		// TTC max
+.dh 0		// TTC min
+.dh 0		// CotMC max
+.dh 0		// CotMC min
+
+// Which courses to enable this rando in, 0 is off, 1 is on
+cBoxHeightCourses:
+.db 0		// Castle Grounds, Inside, and Courtyard
+.db 0		// Bob-omb Battlefield			(no boxes)
+.db 0		// Whomp's Fortress
+.db 1		// Jolly Roger Bay
+.db 0		// Cool Cool Mountain
+.db 0		// Big Boo's Haunt
+.db 0		// Hazy Maze Cave
+.db 0		// Lethal Lava Land
+.db 0		// Shifting Sands Land
+.db 0		// Dire Dire Docks
+.db 0		// Snowman's Land
+.db 0		// Wet Dry World
+.db 0		// Tall Tall Mountain
+.db 0		// Tiny-Huge Island
+.db 0		// Tick Tock Clock			(no boxes)
+.db 0		// Rainbow Ride				(no boxes)
+.db 0		// Bowser in the Dark World		(no boxes)
+.db 0		// Bowser in the Fire Sea		(no boxes)
+.db 0		// Bowser in the Sky			(no boxes)
+.db 0		// Princess's Secret Slide		(no boxes)
+.db 0		// Cavern of the Metal Cap
+.db 0		// Tower of the Wing Cap		(no boxes)
+.db 0		// Vanish Cap under the Moat	 	(no boxes)
+.db 0		// Wing Mario over the Rainbow		(no boxes)
+.db 0		// Secret Aquarium
+.aligna
+
+
+
+// Framerate Rando
+// Randomizes how long a single frame lasts, which also affects how fast the entire game runs (audio is unaffected)
+// A higher value means a longer frame, 8 ends up being about normal, 0 is uncapped (based on hardware speed),
+// and anything above 15 is basically unplayably slow.
+// This function is ignored (game runs exactly as fast as vanilla) in courses where it's not enabled
+
+cGameSpeedEnable:
+.dw 1		// enable this rando?
+
+cGameSpeedRange:
+.dh 15		// max
+.dh 1		// min
+
+// Which courses to enable this rando in, 0 is off, 1 is on
+cGameSpeedCourses:
+.db 0		// Castle Grounds, Inside, and Courtyard
+.db 0		// Bob-omb Battlefield
+.db 0		// Whomp's Fortress
+.db 0		// Jolly Roger Bay
+.db 0		// Cool Cool Mountain
+.db 0		// Big Boo's Haunt
+.db 0		// Hazy Maze Cave
+.db 0		// Lethal Lava Land
+.db 0		// Shifting Sands Land
+.db 1		// Dire Dire Docks (default on)
+.db 0		// Snowman's Land
+.db 0		// Wet Dry World
+.db 0		// Tall Tall Mountain
+.db 0		// Tiny-Huge Island
+.db 0		// Tick Tock Clock
+.db 0		// Rainbow Ride
+.db 0		// Bowser in the Dark World
+.db 0		// Bowser in the Fire Sea
+.db 0		// Bowser in the Sky
+.db 0		// Princess's Secret Slide
+.db 0		// Cavern of the Metal Cap
+.db 0		// Tower of the Wing Cap
+.db 0		// Vanish Cap under the Moat
+.db 0		// Wing Mario over the Rainbow
+.db 0		// Secret Aquarium
+.aligna
+
+
+
+// Economy Rando
+// Randomizes the value of yellow, red, and blue coins, in increments of 0.1 coins.
+// For example, if yellow coins are worth 0.7 coins, collecting three of them will give you 2.1 coins,
+// and the coin counter will display 2, and you'll heal 2.1 coins worth of HP
+cCoinValueEnable:
+.dw 1		// enable this rando?
+
+// The range of the value of each type of coin. Value needs to have a decimal.
+cCoinValueRanges:
+.dw 2.5		// yellow coin max
+.dw 0.0		// yellow coin min
+.dw 4.5		// red coin max
+.dw 1.0		// red coin min
+.dw 7.5		// blue coin max
+.dw 3.0		// blue coin min
+
+
+
+// Misc Randos
+
+// Snow stuck height rando
+// Randomizes the height Mario needs to fall from to get stuck in sand or snow
+cSnowHeightEnable:
+.dw 1		// enable this rando?
+
+// The range of the multiplier on the height, 1.0 is normal height, 0.5 is half the height, etc. Value needs to have a decimal.
+cSnowHeightRange:
+.dw 1.4		// max multiplier
+.dw 0.2		// min multiplier
+
+
+
+
+
+
+// COURSE SPECIFIC RANDOS
+
+// BOB Island Rando
+// Randomizes the position of the floating island in BOB
+cBOBIslandEnable:
+.dw 1		// enable this rando?
+
+
+
+// JRB Rock Rando
+// Randomizes the position of the rocks in JRB
+cJRBRocksEnable:
+.dw 1		// enable this rando?
+
+
+
+// CCM Racing Penguin Speed Rando
+// Randomizes the speed of the racing penguin
+cCCMRaceSpeedEnable:
+.dw 1		// enable this rando?
+
+// The range of the speed in the racing penguin. Vanilla is 70.0. Value needs to have a decimal.
+cCCMRaceSpeedRange:
+.dw 100.0		// max
+.dw 50.0		// min
+
+// CCM Tuxie Odds Rando
+// Randomizes the odds that the Tuxie you pick up is the right one
+cCCMTuxieEnable:
+.dw 1		// enable this rando?
+
+// The odds of a Tuxie being correct, as a percentage from 0.0 to 1.0. Value needs to have a decimal.
+cCCMTuxieOdds:
+.dw 0.33
+
+
+
+// BBH Door Rando
+// Randomizes which doors connect to each other in BBH
+// 0 for off, 1 for simple, 2 for complex
+// In simple mode, each door has a side, either "push" or "pull", and a push side always coenncts to a pull side and vice versa.
+// Every room is very likely to be reachable, if not guarenteed, with this method
+// In complex mode, any door can be connected to any other door side, including itself.
+// This can cause certain rooms to be unreachable in certain randomizations
+// Both simple and complex modes consider each side of a door to be two different doors, making BBH have 50 doors.
+cBBHDoorRando:
+.dw 2		// off, simple, or complex
+
+
+
+// SSL Fence Rando
+// Randomizes the size, shape, and position of the fence outside the pyramid in SSL
+cSSLFenceEnable:
+.dw 1		// enable this rando?
+
+
+
+// SL Climate Rando
+// Randomizes the temperature of SL, which affects various things
+cSLColdEnable:
+.dw 1		// enable this rando?
+
+// Enable which effects of climate rando?
+cSLColdEffects:
+.db 1		// Snowman size		(colder = larger, warmer = smaller)
+.db 1		// Snow wave size	(see above)
+.db 1		// Groundwater		(if warm enough, the ground stops being snow terrain, also you lose HP in the water based on how cold it is) [overrides SL terrain rando]
+.db 1		// Chill bully lake	(if warm enough, chill bully lake will be swimmable and chill bully won't die to it)
+.db 1		// Object freezing	(if cold enough, certain objects will freeze solid and not function unless inside the igloo)
+.db 1		// Cold enemies		(spindrifts and moneybags will move slower if it's colder)
+.db 1		// Igloo melting	(the igloo will melt if warm enough, rendering it unenterable)
+
+// These three settings are kinda stupid but I'm turning everything on anyway
+.db 1		// Hypothermia		(Mario will lose HP just for being outside if it's cold enough)
+.db 1		// Extra wind		(adds random wind if it's colder)
+.db 1		// Snowman's warming	("BREAKING: local penguins concerned by rising sea levels, more at 11")
+
+.aligna
+
+
+
+// WDW Buoyancy Rando
+// Randomizes if certain objects can float in WDW
+cWDWBuoyancyEnable:
+.dw 1		// enable this rando?
+
+// WDW Water Height Rando
+// Randomizes the height that of the water in WDW
+cWDWWaterLevelEnable:
+.dw 1		// enable initial water level rando?
+.dw 1		// enable diamond water level rando?
+
+// The absolute coordinate range that the water height can randomize too.
+cWDWWaterRange:
+.dh 4500	// initial height max, the top of the highest wall is at about 4300 units
+.dh -100	// initial height min, the bottom of the main area is at 0 units
+.dh 4500	// area 1 diamond max, (see above)
+.dh -100	// area 1 diamond min, (see above)
+.dh 300		// area 2 diamond max, the top of the underwater town ceiling is at 256 units
+.dh -2600	// area 2 diamond min, the bottom of the underwater town is at -2559 units
+
+
+
+// TTM Tall Rando
+// Randomizes how tall TTM is
+cTTMTallEnable:
+.dw 1		// enable this rando?
+
+// The range of the multiplier on the height, 1.0 is normal height, 0.5 is half the height, etc. Value needs to have a decimal.
+cTTMTallRange:
+.dw 2.4		// max scale, maximum is 2.97, any higher and SM64 throws a fit from an s16 underflow
+.dw 0.2		// min scale, minimum is 0.0, any lower and the course turns inside out and unplayable
+
+
+
+// THI Object Size Rando
+// Randomizes the scale of most objects. Scale factor is multiplied onto the vanilla scale factor for that object.
+cTHISizeEnable:
+.dw 1		// 0 if off, 1 is a normal distribution from 0.25 to 4.0, and 2 is a customizeable range set out below.
+
+// Range to use. Each value has an equal probability, meaning that a range of 0.1 to 10.0 is significantly more weighted towards being scaled up rather than scaled down.
+cTHISizeRange:
+.dw 2.0		// max scale factor
+.dw 0.1		// min scale factor
+
+
+
+// TTC Rotation Rando
+// Randomizes the rotation of TTC
+cTTCRotateEnable:
+.dw 1
+
+
+
+// RR Platform Rando
+// Randomizes various platforms in RR
+cRRPlatformEnable:
+.db 1		// donut lifts
+.db 1		// moving platforms
+.db 1		// carpets
+.aligna

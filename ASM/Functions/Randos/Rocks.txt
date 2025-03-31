@@ -1,0 +1,52 @@
+// Randomizes the position of the rocks in JRB
+
+FM_Rock_Rando:
+	ADDIU SP, SP, -0x20
+	SW RA, 0x1C (SP)
+	LW AT, cJRBRocksEnable
+	BEQZ AT, @@end
+	
+	LUI T0, 0x8036
+	LW T0, 0x1160 (T0)
+	LW AT, 0x94 (T0)
+	BNEZ AT, @@end
+	ORI AT, R0, 0x1
+	SW AT, 0x94 (T0)
+@@loop:
+	LI A0, 16000.0		// range
+	LI A1, -8000.0		// offset
+	JAL FH_Random_Range_Float
+	NOP
+	SWC1 F0, 0x10 (SP)
+	LI A0, 16000.0		// range
+	LI A1, -8000.0		// offset
+	JAL FH_Random_Range_Float
+	NOP
+	SWC1 F0, 0x14 (SP)
+	LWC1 F12, 0x10 (SP)	
+	LW A2, 0x14 (SP)
+	LI AT, 8000.0
+	MTC1 AT, F14
+	JAL 0x80381900			// find_floor
+	ADDIU A3, SP, 0x18
+	LI AT, -8000.0
+	MTC1 AT, F2
+	C.LT.S F0, F2
+	BC1T @@loop
+	NOP
+	LI A0, 3000.0		// range
+	MFC1 A1, F0		// y as offset
+	JAL FH_Random_Range_Float
+	NOP
+	LUI T0, 0x8036
+	LW T0, 0x1160 (T0)
+	SWC1 F0, 0xA4 (T0)
+	LWC1 F2, 0x10 (SP)
+	SWC1 F2, 0xA8 (SP)
+	LWC1 F4, 0x14 (SP)
+	SWC1 F4, 0xA0 (SP)
+
+@@end:
+	LW RA, 0x1C (SP)
+	J 0x803839CC			// load_object_collision_model
+	ADDIU SP, SP, 0x20

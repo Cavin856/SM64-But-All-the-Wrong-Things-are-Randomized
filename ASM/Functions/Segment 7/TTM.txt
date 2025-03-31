@@ -1,0 +1,293 @@
+@geo_seg_addresses:
+.dw 0x5060	// start
+.dw 0x90D0	// end
+.dw 0xA1C8	// start
+.dw 0xA268	// end
+.dw 0xA370	// start
+.dw 0xA710	// end
+.dw 0xA940	// start
+.dw 0xAA40	// end
+.dw 0xAB88	// start
+.dw 0xAE58	// end
+.dw 0xB008	// start
+.dw 0xB068	// end
+.dw 0xB148	// start
+.dw 0xB3F8	// end
+.dw 0xB5A8	// start
+.dw 0xB608	// end
+.dw 0xB6E8	// start
+.dw 0xB998	// end
+.dw 0xBB48	// start
+.dw 0xBBA8	// end
+.dw 0xBCA0	// start
+.dw 0xBDA0	// end
+.dw 0xBEC0	// start
+.dw 0xBFE0	// end
+.dw 0xC128	// start
+.dw 0xC2E8	// end
+.dw 0xC4D0	// start
+.dw 0xC900	// end
+.dw 0xCB90	// start
+.dw 0xCC60	// end
+.dw 0xCDD0	// start
+.dw 0xD090	// end
+.dw 0xD298	// start
+.dw 0xD548	// end
+.dw 0xD748	// start
+.dw 0xDDB8	// end
+.dw 0xE000	// start
+.dw 0xE240	// end
+.dw 0xE3C0	// start
+.dw 0xE910	// end
+.dw 0xEB40	// start
+.dw 0xEC00	// end
+.dw 0xECC8	// start
+.dw 0xF0D8	// end
+.dw 0xF318	// start
+.dw 0xF858	// end
+.dw 0xFAD8	// start
+.dw 0x10638	// end
+.dw 0x109F0	// start
+.dw 0x10A30	// end
+.dw 0x10B20	// start
+.dw 0x10F90	// end
+.dw 0x111E8	// start
+.dw 0x114B8	// end
+.dw 0x116C8	// start
+.dw 0x11AA8	// end
+.dw 0x11D00	// start
+.dw 0x11D40	// end
+.dw 0x12308	// start (slide painting)
+.dw 0x12388	// end (slide painting)
+.dw -1
+
+@movtex_addresses:
+.dw 0x17134
+.dw 6
+.dw 0x17174
+.dw 4
+.dw 0x171A0
+.dw 6
+.dw 0x171E0
+.dw 4
+.dw 0x1720C
+.dw 8
+
+@normal_objects:
+.dw 0x800FA1F0
+.dw 1
+.dw 0x800FA20C
+.dw 17
+.dw 0x800FA3A8
+.dw 6
+.dw 0x800FA6D4
+.dw 4
+
+gTTMScale:
+.dw 1.0
+
+gTTMInit:
+.dw 0
+
+
+
+FM_TTM_Init:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LI A0, cTTMTallRange
+	JAL FH_Random_Float_Range_From_Config
+	NOP
+	SWC1 F0, gTTMScale
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_TTM_Scale_Y:
+	LH AT, 0x0 (A0)
+	MTC1 AT, F2
+	CVT.S.W F2, F2
+	MUL.S F2, F2, F0
+	CVT.W.S F2, F2
+	MFC1 AT, F2
+	JR RA
+	SH AT, 0x0 (A0)
+
+
+
+FM_Seg7_TTM:
+	LHU T0, 0x0 (T6)		// sanity check
+	ORI AT, R0, 0x36F
+	ADDIU SP, SP, -0x28
+	SW V0, 0x20 (SP)
+	SW V1, 0x24 (SP)
+	BNE AT, T0, @end
+	SW RA, 0x1C (SP)
+	
+	LW AT, cTTMTallEnable
+	BEQZ AT, @end
+	
+	LW AT, gTTMInit			// hacky way to prevent TTM from scaling extra times if exiting slide
+	BNEZ AT, @end
+	ORI AT, R0, 0x1
+	SW AT, gTTMInit
+	
+	ADDIU T6, T6, 0x2
+	B @col_init
+	SW T6, 0x10 (SP)
+
+@end:
+	LW V1, 0x24 (SP)
+	LW V0, 0x20 (SP)
+	LW RA, 0x1C (SP)
+	JR RA				// return
+	ADDIU SP, SP, 0x28
+
+
+
+@col_init:
+	LW T0, 0x10 (SP)		// address of vertices
+	LWC1 F0, gTTMScale
+	OR T1, R0, R0
+	OR T4, R0, R0			// clear this now for geo loop later
+@col_loop:
+	ORI AT, R0, 0x36F
+	BEQ AT, T1, @geo_init
+	ADDIU T1, T1, 1			// increment vertex count
+	JAL FM_TTM_Scale_Y
+	ADDIU A0, T0, 0x2
+	B @col_loop
+	ADDIU T0, T0, 0x6
+
+
+
+@geo_init:
+	LI T9, @geo_seg_addresses
+@geo_loop:
+	LW T2, 0x0 (T9)			// segment offset start
+	BLTZ T2, @special_object_init
+	NOP
+	LW T3, 0x4 (T9)			// segment offset end
+	LW T0, 0x8033B41C		// segment 7 location
+	LUI AT, 0x8000
+	ADDU AT, AT, T0			// segment 7
+	ADDU T0, AT, T2			// range start address
+	ADDU T3, AT, T3			// range end address
+	ADDIU T9, T9, 0x8		// increment geo section pointer
+@geo_subloop:
+	BEQ T0, T3, @geo_loop
+	NOP
+	JAL FM_TTM_Scale_Y
+	ADDIU A0, T0, 0x2
+	B @geo_subloop
+	ADDIU T0, T0, 0x10
+
+
+
+@special_object_init:
+	LI T0, 0x8011260E		// ttm special objs
+	OR T1, R0, R0
+@special_object_loop:
+	ORI AT, R0, 29
+	BEQ AT, T1, @water_init
+	ADDIU T1, T1, 1
+	JAL FM_TTM_Scale_Y
+	ADDIU A0, T0, 0x4
+	B @special_object_loop
+	ADDIU T0, T0, 0xA
+
+
+
+@water_init:
+	LI T0, 0x80112734		// ttm water boxes
+	OR T1, R0, R0
+@water_loop:
+	ORI AT, R0, 4
+	BEQ AT, T1, @macro_object_init
+	ADDIU T1, T1, 1
+	JAL FM_TTM_Scale_Y
+	ADDIU A0, T0, 0xA
+	B @water_loop
+	ADDIU T0, T0, 0xC
+
+
+
+@macro_object_init:
+	LI T0, 0x80112768		// ttm macro objs start
+	OR T1, R0, R0
+@macro_object_loop:
+	ORI AT, R0, 39
+	BEQ AT, T1, @movtex_init
+	ADDIU T1, T1, 1
+	JAL FM_TTM_Scale_Y
+	ADDIU A0, T0, 0x4
+	B @macro_object_loop
+	ADDIU T0, T0, 0xA
+
+
+
+@movtex_init:
+	LI T0, 0x800FB850		// ttm seg7
+	LI T2, @movtex_addresses
+	OR T1, R0, R0
+@movtex_loop:
+	ORI AT, R0, 5
+	BEQ AT, T1, @ukiki_init
+	LW T3, 0x0 (T2)			// address
+	LW T4, 0x4 (T2)			// amount to offset
+	ADDIU T1, T1, 1
+	ADDIU T2, T2, 0x8
+	ADDU T3, T3, T0			// specific movtex address block
+	OR T5, R0, R0
+@movtex_subloop:
+	BEQ T5, T4, @movtex_loop
+	ADDIU T5, T5, 1
+	JAL FM_TTM_Scale_Y
+	ADDIU A0, T3, 0x4
+	B @movtex_subloop
+	ADDIU T3, T3, 0xA
+
+
+
+@ukiki_init:
+	LI T0, 0x80337C04		// cap ukiki min height
+	LI AT, -1550.0
+	MTC1 AT, F2
+	MUL.S F2, F2, F0
+	SWC1 F2, 0x0 (T0)
+	LI T0, 0x803306DC		// sCageUkikiPath
+	OR T1, R0, R0
+@ukiki_loop:
+	ORI AT, R0, 11
+	BEQ AT, T1, @misc
+	ADDIU T1, T1, 1
+	JAL FM_TTM_Scale_Y
+	ADDIU A0, T0, 0x4
+	B @ukiki_loop
+	ADDIU T0, T0, 0x8
+
+
+
+@misc:
+	LI T0, 0x8011032E		// death floor vertices
+	LH AT, 0x2 (T0)			// death floor y
+	MTC1 AT, F2
+	CVT.S.W F2, F2
+	LI AT, -4000.0
+	MTC1 AT, F4
+	C.LE.S F4, F2
+	BC1F @@misc_branch
+	CVT.W.S F4, F4
+	MFC1 AT, F4
+	SH AT, 0x2 (T0)
+	SH AT, 0x8 (T0)
+	SH AT, 0xE (T0)
+	SH AT, 0x14 (T0)		// set death floor to min height of -4000 to make smaller scales playable
+@@misc_branch:
+	LI T0, 0x8010E750		// painting data
+	LI AT, 921.6
+	MTC1 AT, F2
+	MUL.S F2, F2, F0
+	B @end
+	SWC1 F2, 0x14 (T0)

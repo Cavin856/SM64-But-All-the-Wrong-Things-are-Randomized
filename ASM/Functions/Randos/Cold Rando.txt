@@ -1,0 +1,849 @@
+// Various randomizations related to the temperature of Snowman's Land
+
+gSLTemperatureRaw:
+.dw 0x8000
+
+gSLTemperatureWeighted:
+.dw 1.0
+
+@sWindTimer:
+.dw 0
+
+@sWindDirection:
+.dw 0
+
+@sWindBus:
+.dw 60
+
+
+@AltTex_Exclamation_Box:
+.dw 0x08017628		// seg start
+.dw 0x08018E28		// seg end (exclusive)
+.db -4, 4, 18		// RGB offsets
+.db 4			// cSLColdEffects flag
+
+@AltTex_Cannon_Lid:
+.dw 0x08004058		// seg start
+.dw 0x08004858		// seg end (exclusive)
+.db 7, 17, 26		// RGB offsets
+.db 4			// cSLColdEffects flag
+
+@AltTex_Wooden_Signpost:
+.dw 0x0302C9C8		// seg start
+.dw 0x0302D9C8		// seg end (exclusive)
+.db -2, 8, 16		// RGB offsets
+.db 4			// cSLColdEffects flag
+
+@AltTex_Chill_Bully:
+.dw 0x06000060		// seg start
+.dw 0x06002060		// seg end (exclusive)
+.db 24, 18, 24		// RGB offsets
+.db 3			// cSLColdEffects flag
+
+@AltTex_Chill_Bully2:
+.dw 0x06000060		// seg start
+.dw 0x06002060		// seg end (exclusive)
+.db -26, -23, -24	// RGB offsets
+.db 3			// cSLColdEffects flag
+
+@AltTex_Spindrift:
+.dw 0x05000ED0		// seg start
+.dw 0x050016D0		// seg end (exclusive)
+.db 0, 16, 8		// RGB offsets
+.db 5			// cSLColdEffects flag
+
+@AltTex_Spindrift2:
+.dw 0x05000ED0		// seg start
+.dw 0x050016D0		// seg end (exclusive)
+.db 25, 20, 20		// RGB offsets
+.db 6			// cSLColdEffects flag
+
+@AltTex_Spindrift3:
+.dw 0x050016D0		// seg start
+.dw 0x050026D0		// seg end (exclusive)
+.db 8, 10, 10		// RGB offsets
+.db 5			// cSLColdEffects flag
+
+@AltTex_Moneybag:
+.dw 0x060039B0		// seg start
+.dw 0x060051B0		// seg end (exclusive)
+.db 0, -2, 12		// RGB offsets
+.db 5			// cSLColdEffects flag
+
+@AltTex_Snow:
+.dw 0x09008800		// seg start
+.dw 0x09009000		// seg end (exclusive)
+.db -4, -5, -9		// RGB offsets
+.db 2			// cSLColdEffects flag
+
+
+
+@AltLights_Moneybag:
+.dw 0x060051C8		// seg start
+.db 0, 0x37, 0x53	// ambient color
+.db 1			// diffuse number
+.db 0, 0x6F, 0xA7	// diffuse color
+.db 5			// cSLColdEffects flag
+.db 0x28, 0x28, 0x28	// diffuse direction
+.db 0			// null
+
+
+
+FM_Init_Temperature:
+	ADDIU SP, SP, -0x18
+	LW AT, cSLColdEnable
+	BEQZ AT, @@end
+	SW RA, 0x14 (SP)
+	JAL 0x80383BB0			// random_u16
+	NOP
+	SW V0, gSLTemperatureRaw
+	LI T0, 0.25
+	SLL V0, V0, 9
+	ADDU T0, T0, V0			// add random number to float value of 0.25 to get range between 0.25 and 3.99994
+	SW T0, gSLTemperatureWeighted
+	SW R0, @sWindTimer
+	SW R0, @sWindDirection
+	ORI AT, R0, 0x60
+	SW AT, @sWindBus
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+// A0 is struct, A1 is temp
+FM_SL_Alter_TC:
+	SW RA, 0x10 (SP)
+	JAL @check_sl_config
+	NOP
+	BLTZ T0, @sl_alter_end
+	NOP
+	J FH_Parse_Alter_Tex_Struct
+	LW RA, 0x10 (SP)
+
+FM_SL_Alter_TW:
+	SW RA, 0x10 (SP)
+	JAL @check_sl_config
+	NOP
+	BGTZ T0, @sl_alter_end
+	NOP
+	J FH_Parse_Alter_Tex_Struct
+	LW RA, 0x10 (SP)
+
+FM_SL_Alter_LC:
+	SW RA, 0x10 (SP)
+	JAL @check_sl_config
+	NOP
+	BLTZ T0, @sl_alter_end
+	NOP
+	J FH_Alter_Lights
+	LW RA, 0x10 (SP)
+
+FM_SL_Alter_LW:
+	SW RA, 0x10 (SP)
+	JAL @check_sl_config
+	NOP
+	BGTZ T0, @sl_alter_end
+	NOP
+	J FH_Alter_Lights
+	LW RA, 0x10 (SP)
+
+@check_sl_config:
+	LI T0, cSLColdEffects
+	LBU AT, 0xB (A0)
+	ADDU T0, T0, AT
+	LBU AT, 0x0 (T0)
+	BEQZ AT, @sl_alter_end
+	LW T0, gSLTemperatureRaw
+	JR RA
+	SUB T0, T0, A1
+	
+@sl_alter_end:
+	LW RA, 0x10 (SP)
+	JR RA
+	NOP
+
+
+
+FM_Handle_SL_Static_Textures:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T0, @@end
+	NOP
+	
+	LI A0, @AltTex_Wooden_Signpost
+	JAL FM_SL_Alter_TC
+	ORI A1, R0, eqSignFreezeC
+
+	LI A0, @AltTex_Chill_Bully
+	JAL FM_SL_Alter_TW
+	ORI A1, R0, eqChillLakeW
+	LI A0, @AltTex_Chill_Bully2
+	JAL FM_SL_Alter_TW
+	ORI A1, R0, eqChillLakeW
+	
+	LI A0, @AltTex_Moneybag
+	JAL FM_SL_Alter_TC
+	ORI A1, R0, eqMoneybagFreezeC
+	LI A0, @AltLights_Moneybag
+	JAL FM_SL_Alter_LC
+	ORI A1, R0, eqMoneybagFreezeC
+	
+	LI A0, @AltTex_Snow
+	JAL FM_SL_Alter_TW
+	ORI A1, R0, eqNotSnowyTempW
+	
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Handle_SL_Dynamic_Textures:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	
+	LI A0, 0x0700CBD8
+	JAL FH_Seg_to_Virtual
+	ORI T0, R0, 0x202		// above function doesn't change T0
+	LHU AT, 0x2 (V0)		// sanity check
+	BNE AT, T0, @@end
+	
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T0, @@end
+	
+	LH T0, 0x8033BACA		// gCurrAreaIndex
+	ORI AT, R0, 2
+	BEQ AT, T0, @@enter_igloo
+	NOP
+
+	LI A0, @AltTex_Exclamation_Box
+	JAL FM_SL_Alter_TC
+	ORI A1, R0, eqBoxFreezeC
+	
+	LI A0, @AltTex_Cannon_Lid
+	JAL FM_SL_Alter_TC
+	ORI A1, R0, eqCannonFreezeC
+
+	LI A0, @AltTex_Spindrift
+	JAL FM_SL_Alter_TC
+	ORI A1, R0, eqSpindriftFreezeC
+	LI A0, @AltTex_Spindrift2
+	JAL FM_SL_Alter_TC
+	ORI A1, R0, eqSpindriftFreezeC
+	LI A0, @AltTex_Spindrift3
+	JAL FM_SL_Alter_TC
+	ORI A1, R0, eqSpindriftFreezeC
+
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@enter_igloo:
+	LI A0, SEG_8_Generic
+	JAL FH_Decompress_Segment
+	ORI A1, R0, 8
+
+	LI A0, SEG_5_Snow_Objects
+	JAL FH_Decompress_Segment
+	ORI A1, R0, 5
+	
+	B @@end
+	NOP
+
+
+
+FM_Blizzard_Update_Cold:
+	LI T0, cSLColdEffects
+	LBU AT, 0x0 (T0)
+	BEQZ AT, @@end
+
+	LWC1 F0, gSLTemperatureWeighted
+	LW T0, 0x80361160		// curObj
+
+	LWC1 F2, 0x2C (T0)		// x scale
+	LWC1 F4, 0x30 (T0)		// y scale
+	LWC1 F6, 0x34 (T0)		// z scale
+	MUL.S F2, F2, F0
+	MUL.S F4, F4, F0
+	MUL.S F6, F6, F0
+	SWC1 F2, 0x2C (T0)		// x scale
+	SWC1 F4, 0x30 (T0)		// y scale
+	SWC1 F6, 0x34 (T0)		// z scale
+
+	LWC1 F2, 0x1F8 (T0)		// col radius
+	LWC1 F4, 0x1FC (T0)		// col height
+	MUL.S F2, F2, F0
+	MUL.S F4, F4, F0
+	SWC1 F2, 0x1F8 (T0)		// col radius
+	SWC1 F4, 0x1FC (T0)		// col height
+	
+	LWC1 F2, 0x200 (T0)		// hurt radius
+	LWC1 F4, 0x204 (T0)		// hurt height
+	MUL.S F2, F2, F0
+	MUL.S F4, F4, F0
+	SWC1 F2, 0x200 (T0)		// hurt radius
+	SWC1 F4, 0x204 (T0)		// hurt height
+	
+	LWC1 F2, 0xDC (T0)		// oGraphYOffset
+	MUL.S F2, F2, F0
+	SWC1 F2, 0xDC (T0)		// oGraphYOffset
+@@end:
+	JR RA
+	NOP
+
+
+
+FM_Snow_Waves_Cold:
+	LI T0, cSLColdEffects
+	LBU AT, 0x1 (T0)
+	BEQZ AT, @@end
+	
+	LWC1 F0, gSLTemperatureWeighted
+	LW T0, -0x4 (SP)		// snowMound
+	BEQZ T0, @@end
+	NOP
+
+	LWC1 F2, 0x2C (T0)		// x scale
+	LWC1 F4, 0x30 (T0)		// y scale
+	MUL.S F2, F2, F0
+	MUL.S F4, F4, F0
+	SWC1 F2, 0x2C (T0)		// x scale
+	SWC1 F4, 0x30 (T0)		// y scale
+@@end:
+	JR RA
+	NOP
+
+
+
+FM_Exclamation_Cold:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T0, @@end
+	LI T0, cSLColdEffects
+	LBU AT, 0x4 (T0)
+	BEQZ AT, @@end
+	
+	LH T0, 0x8033BACA		// gCurrAreaIndex
+	ORI AT, R0, 1
+	BNE AT, T0, @@end
+	
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqBoxFreezeC
+	SUB T0, T0, AT
+	BLTZ T0, @@end
+	NOP
+	LW T0, 0x80361160
+	ADDIU AT, R0, 0
+	JAL 0x803839CC			// load_object_collision_model
+	SW AT, 0x14C (T0)
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Bully_Cold:
+	LI T0, cSLColdEffects
+	LBU AT, 0x3 (T0)
+	BEQZ AT, @@normalize
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqChillLakeW
+	SUB T0, T0, AT
+	BLTZ T0, @@warm
+	NOP
+@@normalize:
+	LUI T9, 0x8036			// normalize
+	J 0x802EB79C			// return
+	LW T9, 0x1160 (T9)		// normalize
+@@warm:
+	J 0x802EB7D0			// skip to end
+	NOP
+
+
+
+FM_Cannon_Cold:
+	LI T0, cSLColdEffects
+	LBU AT, 0x4 (T0)
+	BEQZ AT, @@normalize
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqCannonFreezeC
+	SUB T0, T0, AT
+	BGTZ T0, @@cold
+	NOP
+@@normalize:
+	JAL 0x8027A340			// normalize
+	NOP
+	LUI T9, 0x8036			// normalize
+	J 0x802E7CA0			// return
+	LW T9, 0x1160 (T9)		// normalize
+@@cold:
+	J 0x802E7D3C			// skip to end
+	NOP
+
+
+
+FM_Cold_Water_Drain:
+	LI AT, cSLColdEffects
+	LBU AT, 0x2 (AT)
+	BEQZ AT, @@end
+	OR AT, R0, R0
+	LW AT, gSLTemperatureRaw
+	SRL AT, AT, 12
+	ADDIU AT, AT, -0x3
+@@end:
+	J 0x802541AC			// return
+	ADDU S0, S0, AT
+
+
+
+FM_Spindrift_Cold:
+	LI A1, 4.0			// normalize
+	LI A2, 1.0			// normalize
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T0, @@end
+	LI AT, cSLColdEffects
+	LBU AT, 0x5 (AT)
+	BEQZ AT, @@end
+	LH T0, 0x8033BACA		// gCurrAreaIndex
+	ORI AT, R0, 1
+	BNE AT, T0, @@end
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, 0x8000
+	SUB T0, T0, AT
+	BLTZ T0, @@end
+	MTC1 A1, F2
+	LWC1 F0, gSLTemperatureWeighted
+	DIV.S F2, F2, F0
+	MFC1 A1, F2			// slow down move speed
+@@end:
+	J 0x802AFDA4			// return
+	NOP
+	
+FM_Spindrift_Cold2:
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T0, @@end
+	LW T3, 0x1160 (T3)		// normalize
+	LI AT, cSLColdEffects
+	LBU AT, 0x5 (AT)
+	BEQZ AT, @@end
+	ORI A1, R0, 0x400		// normalize
+	LH T0, 0x8033BACA		// gCurrAreaIndex
+	ORI AT, R0, 1
+	BNE AT, T0, @@end
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, 0x8000
+	SUB T0, T0, AT
+	BLEZ T0, @@end
+	LWC1 F0, gSLTemperatureWeighted
+	SRL A1, A1, 1
+	MTC1 A1, F2
+	CVT.S.W F2, F2
+	DIV.S F2, F2, F0
+	CVT.W.S F2, F2
+	MFC1 A1, F2			// slow down turn speed
+	LUI AT, 0x0001
+	MTC1 AT, F4
+	CVT.S.W F4, F4
+	DIV.S F4, F4, F0
+	CVT.W.S F4, F4
+	SWC1 F4, 0x48 (T3)		// slow down animation
+@@end:
+	J 0x802AFE38			// return
+	NOP
+
+
+
+FM_Moneybag_Cold:
+	LW T0, 0x80361160
+	LI T1, 20.0
+	LI T2, 40.0
+	MTC1 T1, F2
+	MTC1 T2, F4
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T9, @@end
+	LI AT, cSLColdEffects
+	LBU AT, 0x5 (AT)
+	BEQZ AT, @@end
+	LW T9, gSLTemperatureRaw
+	ORI AT, R0, 0x8000
+	SUB T9, T9, AT
+	BLTZ T9, @@end
+	LWC1 F0, gSLTemperatureWeighted
+	DIV.S F2, F2, F0
+	DIV.S F4, F4, F0
+@@end:
+	SWC1 F2, 0xB8 (T0)		// slow down jump speed
+	J 0x802EE300			// return
+	SWC1 F4, 0xB0 (T0)		// slow down jump speed
+
+
+FM_Moneybag_Cold2:
+	LW T0, 0x80361160
+	LI T1, 10.0
+	MTC1 T1, F2
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T9, @@end
+	LI AT, cSLColdEffects
+	LBU AT, 0x5 (AT)
+	BEQZ AT, @@end
+	LW T9, gSLTemperatureRaw
+	ORI AT, R0, 0x8000
+	SUB T9, T9, AT
+	BLTZ T9, @@end
+	LWC1 F0, gSLTemperatureWeighted
+	DIV.S F2, F2, F0
+@@end:
+	J 0x802EE3E0			// return
+	SWC1 F2, 0xB8 (T0)		// slow down walk speed
+
+
+
+FM_Moneybag_Cold3:
+	LW T0, 0x80361160
+	LI T1, 5.0
+	MTC1 T1, F2
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T9, @@end
+	LI AT, cSLColdEffects
+	LBU AT, 0x5 (AT)
+	BEQZ AT, @@end
+	LW T9, gSLTemperatureRaw
+	ORI AT, R0, 0x8000
+	SUB T9, T9, AT
+	BLTZ T9, @@end
+	LWC1 F0, gSLTemperatureWeighted
+	DIV.S F2, F2, F0
+
+@@end:
+	J 0x802EE44C			// return
+	SWC1 F2, 0xB8 (T0)		// slow down walk speed
+
+
+
+FM_Moneybag_Cold4:
+	LW T0, 0x80361160
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T9, @@end
+	LI AT, cSLColdEffects
+	LBU AT, 0x5 (AT)
+	BEQZ AT, @@end
+	LW T9, gSLTemperatureRaw
+	ORI AT, R0, 0x8000
+	SUB T9, T9, AT
+	BLTZ T9, @@end
+	LWC1 F0, gSLTemperatureWeighted
+	LUI AT, 0x0001
+	MTC1 AT, F4
+	CVT.S.W F4, F4
+	DIV.S F4, F4, F0
+	CVT.W.S F4, F4
+	SWC1 F4, 0x48 (T0)		// slow down animation
+@@end:
+	JR RA				// return
+	NOP
+
+
+
+FM_Igloo_Objects:
+	LI T0, cSLColdEffects
+	LBU AT, 0x6 (T0)
+	BEQZ AT, @@end
+	NOP
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqIglooMeltW
+	SUB T0, T0, AT
+	BGTZ T0, @@end
+	
+	LI T0, 0x800FA3EC
+	SB R0, 0x2 (T0)
+	LI T0, 0x800FA288
+	SB R0, 0x2 (T0)
+@@end:
+	JR RA
+	NOP
+
+
+
+FM_Envfx_Cold:
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqBlizzardTempC
+	SUB T0, T0, AT
+	BGTZ T0, @@blizzard
+	ORI AT, R0, eqNoFallingSnowTempW
+	SUB T0, T0, AT
+	BLTZ T0, @@no_snow
+	ORI T2, R0, 0x1
+@@end:
+	LI T1, 0x800FA644
+	JR RA
+	SB T2, 0x3 (T1)
+@@blizzard:
+	B @@end
+	ORI T2, R0, 0x3
+@@no_snow:
+	B @@end
+	ORI T2, R0, 0x0
+
+
+
+FM_Green_Tree:
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqGreenTreeW
+	SUB T0, T0, AT
+	BGTZ T0, @@end
+	NOP
+	LI T0, 0x800FA3B0
+	LI AT, 0x16001000		// load the green pine tree model
+	SW AT, 0x0 (T0)
+@@end:
+	JR RA
+	NOP
+
+
+
+FM_Cold_Air:
+	LH T0, 0x8033BACA		// gCurrAreaIndex
+	ORI AT, R0, 1
+	BNE AT, T0, @@end
+	LI T0, cSLColdEffects
+	LBU AT, 0x7 (T0)
+	BEQZ AT, @@end
+	NOP
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, 0x8000
+	SUB T0, T0, AT
+	BLTZ T0, @@end
+	SRL T0, T0, 13
+	LI T9, 0x8033B170
+	LHU T8, 0xAE (T9)		// m->health
+	SUBU T8, T8, T0
+	SH T8, 0xAE (T9)
+@@end:
+	JR RA
+	NOP
+
+
+
+FM_SL_Fast_Shiver:
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T0, @@end
+	LH T0, 0x8033BACA		// gCurrAreaIndex
+	ORI AT, R0, 1
+	BNE AT, T0, @@end
+	LI T0, cSLColdEffects
+	LBU AT, 0x7 (T0)
+	BEQZ AT, @@end
+	NOP
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, 0x8000
+	SUB T0, T0, AT
+	BLTZ T0, @@end
+	NOP
+	ADDU T9, T9, T0			// increment shiver counter by first nibble of temp
+@@end:
+	J 0x80260F58			// return
+	SLTI AT, T9, 0xA		// normalize
+
+
+
+FM_Cold_Wind:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	
+	LW AT, cSLColdEnable
+	BEQZ AT, @@end
+	
+	LH T0, 0x8033BACA		// gCurrAreaIndex
+	ORI AT, R0, 1
+	BNE AT, T0, @@end
+	
+	LI T0, cSLColdEffects
+	LBU AT, 0x8 (T0)
+	BEQZ AT, @@end
+	NOP
+	
+	JAL 0x80383BB0			// random_u16
+	NOP
+	
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqWindMinCold
+	SUB T0, T0, AT
+	BLTZ T0, @@end
+
+	LW T1, @sWindTimer
+	BGTZ T1, @@apply_wind
+	
+	LW T1, @sWindBus		// check for a new wind cycle every 10 frames if not blowing
+	BGTZ T1, @@wind_bus
+	NOP
+	ORI T1, R0, 10
+	SW T1, @sWindBus
+	
+	SLTU T1, V0, T0
+	BEQZ T1, @@end
+	NOP
+	ANDI T1, V0, 0x01F0
+	SW T1, @sWindTimer
+	JAL 0x80383BB0			// random_u16
+	NOP
+	SW V0, @sWindDirection
+	
+@@apply_wind:
+	LW A1, @sWindDirection
+	JAL 0x802AE4C0			// spawn_wind_particles
+	ORI A0, R0, 0
+	
+	LI A0, 0x4010FF01
+	LW A1, 0x80361158
+	JAL 0x8031EB00			// play_sound
+	ADDIU A1, A1, 0x54		// marioObj->header.gfx.cameraToObject
+
+	LW T1, @sWindTimer
+	ADDIU T1, T1, -1
+	SW T1, @sWindTimer
+
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@wind_bus:
+	ADDIU T1, T1, -1
+	SW T1, @sWindBus
+	B @@end
+	NOP
+
+
+
+FM_SL_Ground_Wind:
+	LW AT, cSLColdEnable
+	BEQZ AT, @@return
+
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T0, @@return
+	
+	LI T0, cSLColdEffects
+	LBU AT, 0x8 (T0)
+	BEQZ AT, @@return
+	NOP
+	
+	LW T1, @sWindTimer
+	BLEZ T1, @@skip
+	
+	LW T1, @sWindDirection
+	J 0x8025583C			// jump into the middle of mario_update_windy_ground
+	SH T1, 0x6 (SP)			// normalize
+
+@@return:
+	LW T6, 0x68 (A0)		// normalize
+	J 0x80255818			// normalize
+	SW T6, 0xC (SP)			// normalize
+
+@@skip:
+	J 0x8025599C			// skip to end
+	NOP
+
+
+
+FM_SL_Air_Wind:
+	LW AT, cSLColdEnable
+	BEQZ AT, @@return
+	
+	LH T0, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BNE AT, T0, @@return
+	
+	LI T0, cSLColdEffects
+	LBU AT, 0x8 (T0)
+	BEQZ AT, @@return
+	NOP
+	
+	LW T1, @sWindTimer
+	BLEZ T1, @@skip
+	
+	LW T1, @sWindDirection
+	J 0x8026A668			// jump into the middle of mario_update_windy_ground
+	SH T1, 0x1E (SP)		// normalize
+
+@@return:
+	LW T6, 0x28 (SP)		// normalize
+	J 0x8026A640			// normalize
+	LW T7, 0x68 (T6)		// normalize
+
+@@skip:
+	J 0x8026A7FC			// skip to end
+	NOP
+
+
+
+FM_SL_Warming:
+	LI T0, cSLColdEffects
+	LBU AT, 0x9 (T0)
+	BEQZ AT, @@end
+	NOP
+	
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, 0x4000
+	SUB T0, T0, AT
+	BGEZ T0, @@end
+	
+	SRL T0, T0, 5
+	LI T1, 0x80109CE8		// water box col addresses
+	LI T2, 0x8010A9A0		// water box movtex
+	
+	SW R0, 0x0 (T1)
+	SW R0, 0x4 (T1)
+	SW R0, 0x8 (T1)
+	SW R0, 0x8 (T2)
+	SW R0, 0xC (T2)
+	SW R0, 0x10 (T2)
+	SW R0, 0x14 (T2)		// nullify one water box
+	
+	LHU AT, 0x16 (T1)		// second box Y
+	SUBU AT, AT, T0
+	SH AT, 0x16 (T1)
+	
+	ORI T3, R0, 8191
+	SH T3, 0x12 (T1)
+	SH T3, 0x14 (T1)
+	SH T3, 0x28 (T2)
+	SH T3, 0x2C (T2)
+	SH T3, 0x2E (T2)
+	SH T3, 0x32 (T2)
+	
+	ORI T3, R0, -8192
+	SH T3, 0xE (T1)
+	SH T3, 0x10 (T1)
+	SH T3, 0x2A (T2)
+	SH T3, 0x30 (T2)
+	SH T3, 0x34 (T2)
+	SH T3, 0x36 (T2)
+	
+	ORI T3, R0, 4095
+	
+	
+	ORI AT, R0, 0xF
+	SH AT, 0x26 (T2)		// set movtex scale
+	
+@@end:
+	JR RA
+	NOP

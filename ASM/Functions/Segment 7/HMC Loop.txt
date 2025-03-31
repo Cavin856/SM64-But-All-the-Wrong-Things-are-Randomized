@@ -1,0 +1,211 @@
+@geo_seg_addresses:
+.dw 0x5818	// start
+.dw 0x6FF8	// end
+.dw 0x79E8	// start
+.dw 0x7AE8	// end
+.dw 0x7C08	// start
+.dw 0x7FC8	// end
+.dw 0x8158	// start
+.dw 0x8F98	// end
+.dw 0x94A8	// start
+.dw 0xCF78	// end
+.dw 0xE5B0	// start
+.dw 0xECB0	// end
+.dw 0xEFD8	// start
+.dw 0xF2F8	// end
+.dw 0xF458	// start
+.dw 0xF8B8	// end
+.dw 0xFAB0	// start
+.dw 0xFDF0	// end
+.dw 0xFF88	// start
+.dw 0x10008	// end
+.dw 0x10148	// start
+.dw 0x12C78	// end
+.dw 0x13DB8	// start
+.dw 0x13E38	// end
+.dw 0x13F38	// start
+.dw 0x14218	// end
+.dw 0x14370	// start
+.dw 0x14950	// end
+.dw 0x14B88	// start
+.dw 0x14BC8	// end
+.dw 0x14CD0	// start
+.dw 0x14DD0	// end
+.dw 0x14EE8	// start
+.dw 0x16918	// end
+.dw 0x174B0	// start
+.dw 0x17AA0	// end
+.dw 0x17D70	// start
+.dw 0x180F0	// end
+.dw 0x18270	// start
+.dw 0x18E80	// end
+.dw 0x192B8	// start
+.dw 0x19328	// end
+.dw 0x19448	// start
+.dw 0x19D18	// end
+.dw 0x1A150	// start
+.dw 0x1A340	// end
+.dw 0x1A530	// start
+.dw 0x1D5A0	// end
+.dw 0x1E958	// start
+.dw 0x1EF78	// end
+.dw 0x1F288	// start
+.dw 0x1F558	// end
+.dw 0x1F700	// start
+.dw 0x1F7C0	// end
+.dw 0x1F888	// start
+.dw 0x1FC28	// end
+.dw 0x200C8	// start
+.dw 0x20B18	// end
+.dw 0x210F8	// start
+.dw 0x215B8	// end
+.dw 0x21828	// start
+.dw 0x21AC8	// end
+.dw 0x21C10	// start
+.dw 0x225B0	// end
+
+
+
+@offset_x:
+.dw 0
+
+@offset_y:
+.dw 0
+
+@offset_z:
+.dw 0
+
+
+FM_Seg7_HMC:
+	LHU T0, 0x0 (T6)		// sanity check
+	ORI AT, R0, 0x5E1
+	ADDIU SP, SP, -0x28
+	SW V0, 0x20 (SP)
+	SW V1, 0x24 (SP)
+	BNE AT, T0, @end
+	SW RA, 0x1C (SP)
+	ADDIU T6, T6, 0x2		// this command probably didn't need to stay
+	SW T6, 0x10 (SP)
+	B @geo_alignment
+	SW R0, 0x14 (SP)
+
+@end:
+	LW V1, 0x24 (SP)
+	LW V0, 0x20 (SP)
+	LW RA, 0x1C (SP)
+	JR RA				// return
+	ADDIU SP, SP, 0x28
+
+@generate_offsets:
+	ORI A0, R0, 51			// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, -25			// offset, 	+100 to -100
+	SW V0, @offset_x
+	ORI A0, R0, 301			// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, -150		// offset, 	+200 to -200
+	SW V0, @offset_y
+	ORI A0, R0, 51			// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, -25			// offset, 	+100 to -100
+	SW V0, @offset_z
+	B @col_loop
+	NOP
+
+@col_loop:
+	LW T1, 0x14 (SP)		// vertex count
+	ORI AT, R0, 0x5E1
+	BEQ AT, T1, @end
+	LW T0, 0x10 (SP)		// address of vertices
+	LH T7, 0x0 (T0)			// X
+	LH T8, 0x2 (T0)			// Y
+	LH T9, 0x4 (T0)			// Z
+	LW AT, @offset_x
+	ADDU AT, T7, AT
+	SH AT, 0x0 (T0)			// X
+	LW AT, @offset_y
+	ADDU AT, T8, AT
+	SH AT, 0x2 (T0)			// Y
+	LW AT, @offset_z
+	ADDU AT, T9, AT
+	SH AT, 0x4 (T0)			// Z
+	ADDIU T0, T0, 0x6
+	SW T0, 0x10 (SP)		// address of vertices
+	ADDIU T1, T1, 1			// increment vertex count
+	SW T1, 0x14 (SP)
+	B @geo
+	OR T1, R0, R0
+
+@geo:
+	ORI AT, R0, 32			// number of geo sections to look through
+	BEQ AT, T1, @generate_offsets
+	NOP
+	LI T0, @geo_seg_addresses
+	SLL AT, T1, 3
+	ADDU AT, T0, AT
+	LW T2, 0x0 (AT)			// segment offset start
+	LW T3, 0x4 (AT)			// segment offset end
+	LW T0, 0x8033B41C		// segment 7 location
+	LUI AT, 0x8000
+	ADDU AT, AT, T0			// segment 7
+	ADDU T0, AT, T2			// range start address
+	ADDU T3, AT, T3			// range end address
+	ADDIU T1, T1, 0x1		// increment geo section counter
+@geo_loop:
+	BEQ T0, T3, @geo
+	NOP
+	LH T4, 0x0 (T0)			// X
+	BNE T4, T7, @geo_loop_end
+	LH T5, 0x2 (T0)			// Y
+	BNE T5, T8, @geo_loop_end
+	LH T6, 0x4 (T0)			// Z
+	BNE T6, T9, @geo_loop_end
+	NOP
+	LW AT, @offset_x
+	ADDU AT, AT, T4
+	SH AT, 0x0 (T0)			// X
+	LW AT, @offset_y
+	ADDU AT, AT, T5
+	SH AT, 0x2 (T0)			// Y
+	LW AT, @offset_z
+	ADDU AT, AT, T6
+	SH AT, 0x4 (T0)			// Z
+@geo_loop_end:
+	B @geo_loop
+	ADDIU T0, T0, 0x10
+
+
+
+@geo_alignment:
+	LW T0, 0x8033B41C		// segment 7 location
+	LUI AT, 0x8000
+	ADDU T0, AT, T0			// segment 7
+	LI T1, DAT_HMC_geo_alignment
+@geo_alignment_loop:
+	LW T2, 0x0 (T1)
+	BLTZ T2, @col_alignment
+	LW T3, 0x4 (T1)
+	ADDU AT, T0, T2
+	SH T3, 0x0 (AT)			// align geo coord with collision coord
+	B @geo_alignment_loop
+	ADDIU T1, T1, 0x8
+
+@col_alignment:
+	LI AT, 0x25594
+	ADDU T0, T0, AT			// offset
+	LI T1, DAT_HMC_col_alignment
+	OR T2, R0, R0
+@col_alignment_loop:
+	LH T2, 0x0 (T1)
+	//BLTZ T2, @end
+	NOP
+	BLTZ T2, @generate_offsets
+	ADDU T3, T0, T2
+	LHU AT, 0x2 (T1)
+	SH AT, 0x0 (T3)
+	LHU AT, 0x4(T1)
+	SH AT, 0x2 (T3)
+	LHU AT, 0x6 (T1)
+	SH AT, 0x4 (T3)			// replace tri with our own
+	B @col_alignment_loop
+	ADDIU T1, T1, 0x8

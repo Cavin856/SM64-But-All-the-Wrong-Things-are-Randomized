@@ -1,0 +1,160 @@
+// Randomizes the value of coins on level load
+// 100.0 coins
+
+@sYellowValue:
+.dw 10
+
+@sRedValue:
+.dw 20
+
+@sBlueValue:
+.dw 50
+
+gFractionalCoins:
+.dw 0x00000000
+
+gFractionalHeal:
+.dw 0x00000000
+
+
+// originally writing these functions to use integer multiples of 0.1 instead of floats is backfiring now that I have to rewrite for the config...
+FM_Coin_Rando_Init:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	SW S0, 0x10 (SP)
+	LW AT, cCoinValueEnable
+	BEQZ AT, @@end
+	NOP
+	LI S0, cCoinValueRanges
+	JAL FH_Random_Coin_Range
+	ADDIU A0, S0, 0x0
+	SW V0, @sYellowValue		// yellow coin value
+	JAL FH_Random_Coin_Range
+	ADDIU A0, S0, 0x8
+	SW V0, @sRedValue		// red coin value
+	JAL FH_Random_Coin_Range
+	ADDIU A0, S0, 0x10
+	SW V0, @sBlueValue		// blue coin value
+@@end:
+	LW S0, 0x10 (SP)
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FH_Random_Coin_Range:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LI AT, 0.1
+	MTC1 AT, F0
+	LWC1 F2, 0x0 (A0)
+	LWC1 F4, 0x4 (A0)
+	DIV.S F6, F2, F0
+	DIV.S F8, F4, F0
+	TRUNC.W.S F6, F6
+	TRUNC.W.S F8, F8
+	MFC1 A0, F6
+	MFC1 A1, F8
+	JAL FH_Random_Range	
+	SUBU A0, A0, A1
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+
+// Enable tenths of coins
+FM_Interact_Coin_Alt:
+	LW T0, 0x20 (SP)		// o
+	LW T9, 0x18 (SP)		// m
+	LW T1, gFractionalCoins
+	LW T0, 0x180 (T0)		// o->oDamageOrCoinValue
+	ADDU T1, T1, T0
+	ORI AT, R0, 10
+	DIVU T1, AT
+	SW T1, gFractionalCoins
+	LW T3, gFractionalHeal
+	ADDU T3, T3, T0
+	SW T3, gFractionalHeal
+	MFLO T2
+	J 0x8024DB74			// normalize
+	SH T2, 0xA8 (T9)		// m->numCoins
+
+
+
+// Reset fractional coins when changing levels
+FM_Reset_Fractional:
+	SW R0, gFractionalCoins
+	LUI T4, 0x8033			// normalize
+	J 0x8024BEC8			// normalize
+	LW T4, 0xD93C (T4)		// normalize
+
+
+
+// Heal using fractional coins
+FM_Fractional_Heal:
+	LW T0, gFractionalHeal
+	BLEZ T0, @@end
+	LUI T9, 0x8034
+	SLL T1, T0, 4
+	LHU T8, 0xB21E (T9)
+	ADDU T8, T8, T1
+	SH T8, 0xB21E (T9)
+	SW R0, gFractionalHeal
+	@@end:
+	LW T6, 0x28 (SP)		// normalize
+	J 0x802541C4			// normalize
+	LBU T5, 0xB3 (T6)		// normalize
+
+
+
+FM_Yellow_Or_Blue_Value:
+	LUI T0, 0x8036
+	LW T0, 0x1160 (T0)
+	LI T1, 0x800EB9B0		// bhv script
+	LW T2, @sBlueValue		// blue coin value
+	LW AT, 0x1CC (T0)
+	BEQ T1, AT, @@end
+	NOP
+	LW T2, @sYellowValue		// yellow coin value
+	@@end:
+	JR RA				// normalize return
+	SW T2, 0x180 (T0)		// damage_or_coin_value
+
+FM_Boo_Blue:
+	LUI T0, 0x8036
+	LW T0, 0x1160 (T0)
+	LW AT, @sBlueValue		// blue coin value
+	J 0x802AC124			// normalize return
+	SW AT, 0x180 (T0)		// damage_or_coin_value
+
+FM_Boo_Yellow:
+	LUI T0, 0x8036
+	LW T0, 0x1160 (T0)
+	LW AT, @sYellowValue		// yellow coin value
+	J 0x802AC124			// normalize return
+	SW AT, 0x180 (T0)		// damage_or_coin_value
+
+FM_Yellow_Value:
+	LUI T0, 0x8036
+	LW T0, 0x1160 (T0)
+	LW AT, @sYellowValue		// yellow coin value
+	JR RA				// normalize return
+	SW AT, 0x180 (T0)		// damage_or_coin_value
+
+FM_Red_Value:
+	LUI T0, 0x8036
+	LW T0, 0x1160 (T0)
+	LW AT, @sRedValue		// red coin value
+	JR RA				// normalize return
+	SW AT, 0x180 (T0)		// damage_or_coin_value
+
+FM_Blue_Value:
+	LUI T0, 0x8036
+	LW T0, 0x1160 (T0)
+	LW AT, @sBlueValue		// blue coin value
+	JR RA				// normalize return
+	SW AT, 0x180 (T0)		// damage_or_coin_value
+

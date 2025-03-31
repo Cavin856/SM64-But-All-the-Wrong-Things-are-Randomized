@@ -1,0 +1,32 @@
+// Inject at the start of [0x80248964, setup_game_memory]
+.orga 0x396C
+	LUI A0, 0x807D		// Copy 0x7D0000-0x7FFFFF to 0x807D0000-0x807FFFFF
+	LUI A1, 0x007D
+	LUI A2, 0x007F
+	JAL 0x80278504		// dma_read
+	ORI A2, A2, 0xFFFF
+	J FM_Normalize_Initialization
+	NOP
+
+.headersize 0x80000000
+.orga 0x007D0000
+.area 0x30000, 1
+
+// Run the lines of code that we injected over
+FM_Normalize_Initialization:
+	OR A0, R0, R0
+	JAL 0x80277EE0
+	LUI A1, 0x8000
+	LUI A0, 0x8034
+	LUI A1, 0x8034
+	ADDIU A1, A1, 0xB040
+	J 0x80248988		// Return
+	ADDIU A0, A0, 0xB028
+
+// Include our own assembly files
+.include "ASM/EQU Labels.txt"
+.include "ASM/Segment Addresses.txt"
+.include "ASM/Function Header.txt"
+.endarea
+.include "ASM/Hardcoded.txt"
+.include "Config.txt"

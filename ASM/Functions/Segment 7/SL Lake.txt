@@ -1,0 +1,66 @@
+@lake_triples:
+.dh 0x844				// .652
+.dh 256, 256, -4607
+
+.dh 0x1098
+.dh 352, 349, 365
+.dh 0x109E
+.dh 352, 361, 349
+.dh 0x10A4
+.dh 352, 351, 361
+.dh 0x10AA
+.dh 352, 362, 351
+.dh 0x10B0
+.dh 352, 363, 362
+.dh 0x10B6
+.dh 352, 364, 363
+.dh 0x10BC
+.dh 352, 365, 364
+
+.dh -1
+.aligna
+
+
+
+FM_Seg7_SL_Lake:
+	LHU T0, 0x0 (T6)		// Sanity check
+	ORI AT, R0, 0x202
+	BNE AT, T0, @end
+	ADDIU SP, SP, -0x18
+	LI T0, cSLColdEffects
+	LBU AT, 0x3 (T0)
+	BEQZ AT, @end
+	NOP
+	LW T0, gSLTemperatureRaw
+	ORI AT, R0, eqChillLakeW
+	SUB T0, T0, AT
+	BGTZ T0, @end
+	NOP
+	
+	SW T6, 0x10 (SP)
+	B @lake_col_init
+	SW R0, 0x14 (SP)
+
+@end:
+	ADDIU SP, SP, 0x18
+	JR RA				// return
+	NOP
+
+
+@lake_col_init:
+	LI T9, 0x80108BDC
+	SH R0, 0x0 (T9)			// set surface_burning to surface_default
+	LI T0, 0x80107B48		// seg7 sl address
+	LI T1, @lake_triples
+@lake_col_loop:
+	LH T2, 0x0 (T1)
+	BLTZ T2, @end
+	ADDU T3, T0, T2
+	LHU AT, 0x2 (T1)
+	SH AT, 0x0 (T3)
+	LHU AT, 0x4(T1)
+	SH AT, 0x2 (T3)
+	LHU AT, 0x6 (T1)
+	SH AT, 0x4 (T3)			// replace data with our own
+	B @lake_col_loop
+	ADDIU T1, T1, 0x8

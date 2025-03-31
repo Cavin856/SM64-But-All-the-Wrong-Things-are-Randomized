@@ -1,0 +1,118 @@
+FD_Debug:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	SW V1, 0x10 (SP)
+
+	//JAL FD_SSL_Corners
+	NOP
+
+	OR V0, R0, R0
+	LW V1, 0x10 (SP)
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FD_Debug_Save:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+// Corner viewer, teleports mario and camera to corner
+// D<	activate
+// D^	+1
+// Dv	-1
+// D>	+8
+
+@SSL_Corner_ID:
+.dw 0
+
+FD_SSL_Corners:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 0x8
+	BNE AT, T9, @@end
+	NOP
+	LW T0, 0x8033B41C		// segment 7 location
+	LUI AT, 0x8000
+	ADDU T0, AT, T0			// segment 7
+	ORI AT, R0, 0xFD84		// segment 7 offset
+	ADDU T0, T0, AT			// SSL collision start
+	
+	LW T9, 0x80361158		// mario object
+	BEQZ T9, @@end			// skip if not loaded
+	NOP
+	
+	LW T3, 0x8032DDCC		// gCurrentArea
+	LW T3, 0x24 (T3)		// camera struct
+	ORI AT, R0, 0xE
+	SB AT, 0x0 (T3)
+	LW T3, 0x8032DF60		// gPlayerCamStates [0]
+	
+	LW T1, @SSL_Corner_ID
+	SLL AT, T1, 1
+	ADDU AT, AT, T1
+	SLL AT, AT, 1			// mul by 6
+	ADDU T0, T0, AT			// get corner offset
+	LH AT, 0x0 (T0)			// corner x
+	MTC1 AT, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x20 (T9)		// m->x pos
+	SWC1 F0, 0x4 (T3) 		// focus x
+	LH AT, 0x2 (T0)			// corner y
+	MTC1 AT, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x24 (T9)		// m->y pos
+	SWC1 F0, 0x8 (T3) 		// focus z
+	LH AT, 0x4 (T0)			// corner z
+	MTC1 AT, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x28 (T9)		// m->z pos
+	SWC1 F0, 0xC (T3) 		// focus z
+
+	LW T8, 0x8033AFA0		// Controller Inputs
+	ANDI AT, T8, 0x0800		// [D^] button
+	BNEZ AT, @@up
+	ANDI AT, T8, 0x0400		// [Dv] button
+	BNEZ AT, @@down
+	ANDI AT, T8, 0x0200		// [D<] button
+	BNEZ AT, @@left
+	ANDI AT, T8, 0x0100		// [D>] button
+	BNEZ AT, @@right
+	NOP
+	
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@up:
+	ADDIU T1, T1, 0x1
+	SW T1, @SSL_Corner_ID
+	B @@end
+	NOP
+	
+@@down:
+	ADDIU T1, T1, -0x1
+	SW T1, @SSL_Corner_ID
+	B @@end
+	NOP
+
+@@left:
+	LI T9, 0x8033B170		// mario struct
+	B @@end
+	SW R0, 0xC (T9)			// m->action = uninitialized
+
+@@right:
+	ADDIU T1, T1, 0x8
+	SW T1, @SSL_Corner_ID
+	B @@end
+	NOP

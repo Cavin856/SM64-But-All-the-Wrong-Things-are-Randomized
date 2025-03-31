@@ -1,0 +1,58 @@
+// Randomizes the height of special boxes
+
+@CourseConvertTable:			// simplifes config file
+.db 0, -1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1
+.aligna
+
+FM_Special_Box_Height:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	SW A0, 0x10 (SP)
+	LI A0, cBoxHeightCourses
+	JAL FH_Check_Config_Enabled_Courses
+	NOP	
+	BEQZ V0, @end
+	
+	LI T0, @CourseConvertTable
+	ADDU AT, T0, AT
+	LB T0, 0x0 (AT)
+	BLTZ T0, @end
+	SLL T0, T0, 2
+	LI T1, cBoxHeightRange
+	JAL FH_Random_Range_From_Config
+	ADDU A0, T1, T0
+	
+	LW A0, 0x10 (SP)		// address of pointer
+	LW T3, 0x0 (A0)			// data pointer
+	LHU T5, -0xA (T3)		// box type
+	ADDIU AT, T5, -50
+	BLTZ AT, @@compare
+	ORI T6, R0, 0x0			// if less than 0, box ID is <50 and thus water
+	BGTZ AT, @@compare
+	ORI T6, R0, 0x2			// if greater than 0, box ID is >50 and thus mist
+	ORI T6, R0, 0x1			// if exactly 0, box ID is 50 and thus toxic gas
+@@compare:	
+	LI T7, cBoxHeightType
+	ADDU T7, T7, T6
+	LBU AT, 0x0 (T7)
+	BEQZ AT, @end
+
+	LH T4, 0x0 (T3)			// box height
+	ADDU T4, T4, V0	
+	
+	LW T1, 0x28 (SP)		// get loop count, gotta change gEnvironmentRegions too
+	SLL AT, T1, 1
+	ADDU T1, AT, T1
+	SLL T1, T1, 2			// multiply by 0xC
+	LW AT, 0x80361184		// gEnvironmentRegions
+	ADDU AT, AT, T1
+	SH T4, 0xC (AT)			// Store height to gEnvironmentRegions
+
+@end:
+
+	LW A0, 0x10 (SP)
+	LW T3, 0x0 (A0)			// data pointer
+	LH T4, 0x0 (T3)			// box height, I don't like repeating this code but it's the easiest way to not have to rewrite this function
+	LW RA, 0x14 (SP)
+	J 0x803832F0			// return
+	ADDIU SP, SP, 0x18

@@ -1,0 +1,60 @@
+// Handles moving vertices for various absurd randos
+FM_Alter_Vertex:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 1
+	BEQ AT, T9, @bob
+	ORI AT, R0, 6
+	BEQ AT, T9, @hmc
+	ORI AT, R0, 8
+	BEQ AT, T9, @ssl
+	ORI AT, R0, 10
+	BEQ AT, T9, @sl
+	ORI AT, R0, 12
+	BEQ AT, T9, @ttm
+	ORI AT, R0, 14
+	BEQ AT, T9, @ttc
+	NOP
+@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@bob:
+	JAL FM_Seg7_BOB
+	NOP
+	B @end
+	NOP
+	
+@hmc:
+	JAL FM_Seg7_HMC
+	NOP
+	B @end
+	NOP
+
+@ssl:
+	JAL FM_Seg7_SSL_Fence
+	NOP
+	B @end
+	NOP
+
+@sl:
+	JAL FM_Seg7_SL_Lake
+	NOP
+	JAL FM_Seg7_SL_Igloo
+	NOP
+	B @end
+	NOP
+
+@ttm:
+	JAL FM_Seg7_TTM
+	NOP
+	B @end
+	NOP
+
+@ttc:
+	JAL FM_Seg7_TTC
+	NOP
+	B @end
+	NOP

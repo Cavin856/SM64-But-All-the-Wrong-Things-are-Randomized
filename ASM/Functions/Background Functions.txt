@@ -1,0 +1,21 @@
+FM_Background_Functions:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BEQ AT, T9, @@sl
+	NOP
+
+@@end:
+	OR V0, R0, R0			// return 0
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@sl:
+	JAL FM_Cold_Air
+	NOP
+	JAL FM_Cold_Wind
+	NOP
+	B @@end
+	NOP

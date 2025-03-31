@@ -1,0 +1,184 @@
+@Y_Offsets:
+.dw 64.0
+.dw 64.0
+
+.dw 100.0
+.dw 0.0
+
+.dw 64.0
+.dw 0.0
+
+.dw 18.0
+.dw 0.0
+
+.dw 28.0
+.dw 1.0
+
+.dw 75.0
+.dw 0.0
+
+.dw 10.0
+.dw 0.0
+
+.dw 100.0
+.dw 0.0
+
+.dw 50.0
+.dw 0.0
+
+
+FM_Floating_Y_Offset:
+	J 0x802F6924			// return
+	LWC1 F10, 0x1A4 (T7)		// distance from bottom of model to Buoyancy point
+
+
+FM_Init_Floating_General:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	OR V0, R0, R0
+	
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 11
+	BNE AT, T9, @@end
+	NOP
+	LW AT, cWDWBuoyancyEnable
+	BEQZ AT, @@end
+	NOP
+	
+	LW T0, 0x80361160
+	LW V0, 0x94 (T0)		// init flag
+	BEQZ V0, @@initialize
+	NOP
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@initialize:
+	JAL 0x80383D1C			// random sign
+	NOP
+	LW T0, 0x80361160
+	B @@end
+	SW V0, 0x94 (T0)		// float flag
+
+
+
+FM_Handle_Floating_General:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	
+	JAL FM_Init_Floating_General
+	SW A0, 0x10 (SP)		// Y offset ID
+	BLEZ V0, @@end			// if not positive, use vanilla behavior
+	
+	LW T2, 0x10 (SP)		// Y offset ID
+	SLL T2, T2, 3
+	LW T0, 0x80361160
+	LI T1, @Y_Offsets
+	ADDU T1, T1, T2
+	LW AT, 0x0 (T1)
+	SW AT, 0x1A4 (T0)		// distance from bottom of model to Buoyancy point
+	LW AT, 0x4 (T1)
+	JAL 0x802F6984			// bhv_floating_platform_loop
+	SW AT, 0x1A8 (T0)		// distance from bottom of model to origin y
+	
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Unfloating_Platform:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	
+	JAL FM_Init_Floating_General
+	NOP
+	LW T0, 0x80361160
+	BLTZ V0, @@sink			// these need to float by default
+	
+	LI AT, 64.0
+	SW AT, 0x1A4 (T0)		// distance from bottom of model to Buoyancy point
+	JAL 0x802F6984			// bhv_floating_platform_loop
+	SW AT, 0x1A8 (T0)		// distance from bottom of model to origin y
+
+@@end:	
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@sink:
+	LWC1 F12, 0xA0 (T0)
+	LWC1 F14, 0xA4 (T0)
+	LW A2, 0xA8 (T0)
+	JAL 0x80381900			// find_floor
+	ADDIU A3, SP, 0x10
+	LI AT, 64.0
+	MTC1 AT, F2
+	ADD.S F0, F0, F2
+	LW T0, 0x80361160
+	B @@end
+	SWC1 F0, 0xA4 (T0)
+	
+
+
+FM_Express_Elevator_Platform:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Handle_Floating_General
+	ORI A0, R0, 6
+	JAL 0x803839CC			// normalize
+	NOP
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Random_Diamond_Height:
+	LW AT, cWDWWaterLevelEnable
+	BEQZ AT, @@end
+	NOP
+	
+	LI A0, cWDWWaterRange
+	LH T0, 0x8033BACA		// gCurrAreaIndex
+	ORI AT, R0, 2
+	BEQ AT, T0, @@area2
+	NOP
+	
+	JAL FH_Random_Range_From_Config
+	ADDIU A0, A0, 0x4
+	LW T2, 0x80361160
+	SW V0, 0xF8 (T2)
+@@end:
+	LUI T2, 0x8036
+	J 0x802C2AB0			// normalize
+	LW T2, 0x1160 (T2)
+
+@@area2:
+	JAL FH_Random_Range_From_Config
+	ADDIU A0, A0, 0x8
+	LW T2, 0x80361160
+	B @@end
+	SW V0, 0xF8 (T2)
+
+
+
+FM_Random_WDW_Initial_Height:
+	LI AT, cWDWWaterLevelEnable
+	LW AT, 0x4 (AT)
+	BEQZ AT, @@end
+	NOP
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LI A0, cWDWWaterRange
+	JAL FH_Random_Range_From_Config
+	NOP
+	LW RA, 0x14 (SP)
+	ADDIU SP, SP, 0x18
+	SH V0, 0x2 (SP)
+@@end:
+	LUI T9, 0x8036
+	J 0x802D0160
+	LW T9, 0x1184 (T9)

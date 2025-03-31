@@ -1,0 +1,20 @@
+eqNotSnowyTempW		equ	0x6000
+eqChillLakeW		equ	0x7000
+
+eqBoxFreezeC		equ	0xC000
+eqSignFreezeC		equ	0xC000
+eqCannonFreezeC		equ	0xA000
+
+eqMoneybagFreezeC	equ	0x9000
+eqSpindriftFreezeC	equ	0xD000
+
+eqIglooMeltW		equ	0x4000
+
+eqBlizzardTempC		equ	0xA000
+eqNoFallingSnowTempW	equ	0x3000
+
+eqGreenTreeW		equ	0x3000
+
+eqWindMinCold		equ	0xB000
+
+eqWaterRiseW		equ	0x4000

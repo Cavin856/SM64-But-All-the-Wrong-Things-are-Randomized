@@ -1,0 +1,29 @@
+@sSnowModifier:
+.dw 0x00000000
+
+FM_Snow_Init:
+	ADDIU SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL 0x80383CB4		// random_float
+	NOP
+	LI A0, 	cSnowHeightRange
+	JAL FH_Random_Float_Range_From_Config
+	NOP
+	SWC1 F0, @sSnowModifier
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, 0x18
+
+
+
+FM_Snow_Modifier:
+	LI AT, 1000.0
+	MTC1 AT, F10
+	LW AT, cSnowHeightEnable
+	BEQZ AT, @@end
+	LW AT, @sSnowModifier
+	MTC1 AT, F0
+	MUL.S F10, F10, F0
+@@end:
+	J 0x8026A544		// return
+	NOP

@@ -1,0 +1,175 @@
+// Modifies standard objects data
+FM_Modify_Object:
+	LW T9, 0x8033B438		// seg E address
+	LUI AT, 0x8000
+	ADDU T9, T9, AT
+	LHU T9, 0x0 (T9)
+	ORI AT, R0, 0x1B04		// sanity check
+	BEQ AT, T9, @end
+	NOP
+	
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 4
+	BEQ AT, T9, @ccm
+	ORI AT, R0, 12
+	BEQ AT, T9, @ttm
+	ORI AT, R0, 14
+	BEQ AT, T9, @ttc
+	ORI AT, R0, 15
+	BEQ AT, T9, @rr
+	NOP
+	B @end
+	NOP
+
+@end:
+	LUI T6, 0x8034			// normalize
+	J 0x8037F46C			// return
+	LH T6, 0xBAC8 (T6)		// normalize
+
+
+
+@ccm:
+	LW AT, cCCMTuxieEnable
+	BEQZ AT, @end
+	
+	LUI T8, 0x8039
+	LW T8, 0xBE28 (T8)		// object's data
+	LI T0, 0x130020E8		// small penguin bhv script
+	LW AT, 0x14 (T8)		// object's bhv script
+	BNE AT, T0, @end
+	NOP
+	JAL 0x80383CB4			// random_float
+	NOP
+	LUI T8, 0x8039
+	LW T8, 0xBE28 (T8)		// object's data
+	LWC1 F2, cCCMTuxieOdds
+	C.LT.S F0, F2
+	BC1T @@ccm_end
+	ORI AT, R0, 0x0
+	ORI AT, R0, 0x1
+@@ccm_end:
+	B @end
+	SB AT, 0x11 (T8)
+
+
+
+@ttm:
+	LWC1 F0, gTTMScale
+	LUI T8, 0x8039
+	LW T8, 0xBE28 (T8)		// object's data
+	LW T7, 0x14 (T8)		// object's bhv script
+	LI AT, 0x13002A48		// bhvStaticObject
+	BEQ AT, T7, @end
+	LW T7, 0x4 (T8)			// x and y coords
+	LI AT, 0x1B581505		// coords to filter out area 2 warp
+	BEQ AT, T7, @end
+	LI AT, 0xE38BF8B6		// coords to filter out area 4 podium
+	BEQ AT, T7, @end
+	
+	LH AT, 0x6 (T8)			// Y
+	MTC1 AT, F2
+	CVT.S.W F2, F2
+	MUL.S F2, F2, F0
+	CVT.W.S F2, F2
+	MFC1 AT, F2
+	B @end
+	SH AT, 0x6 (T8)			// Y
+
+
+
+@ttc:
+	LUI T8, 0x8039
+	LW T8, 0xBE28 (T8)		// object's data
+	LH A0, 0x4 (T8)
+	LH A1, 0x6 (T8)
+	JAL FM_TTC_Rotate_Point
+	LH A2, 0x8 (T8)
+	
+	LUI T8, 0x8039
+	LW T8, 0xBE28 (T8)		// object's data
+	SH T1, 0x4 (T8)
+	SH T2, 0x6 (T8)
+	B @end
+	SH T3, 0x8 (T8)
+
+
+
+@rr:
+	LI AT, cRRPlatformEnable
+	LBU AT, 0x1 (AT)
+	BEQZ AT, @end
+	NOP
+	ADDIU SP, SP, -0x20
+	SW S0, 0x10 (SP)
+	SW S1, 0x14 (SP)
+	LW S0, 0x8038BE28		// object's data
+	LI S1, @rr_platforms
+	OR T0, R0, S1
+	LW T7, 0x14 (S0)		// object's bhv script
+@@rr_loop:
+	LW T2, 0x0 (T0)
+	BEQZ T2, @@rr_end
+	NOP
+	BEQ T2, T7, @@rr_randomize
+	NOP
+	B @@rr_loop
+	ADDIU T0, T0, 0x8
+
+@@rr_end:
+	LW S1, 0x14 (SP)
+	LW S0, 0x10 (SP)
+	B @end
+	ADDIU SP, SP, 0x20
+	
+@@rr_randomize:
+	JAL FM_Random_RR_Pos_In_Zone
+	ADDIU A0, S0, 0x4
+	
+	ORI A0, R0, 0x6
+	JAL FH_Random_Range
+	OR A1, R0, R0
+	SLL V0, V0, 3
+	ADDU S1, S1, V0			// rr platform struct
+	LW AT, 0x0 (S1)
+	SW AT, 0x14 (S0)		// object's bhv script
+	LBU A0, 0x6 (S1)
+	JAL FH_Random_Range
+	LHU A1, 0x4 (S1)
+	LI AT, @rr_platforms
+	BEQ AT, S1, @@octogon
+	NOP
+	SH V0, 0x10 (S0)		// bparams
+@@return:
+	LBU AT, 0x7 (S1)
+	JAL 0x80383BB0			// random_u16
+	SB AT, 0x3 (S0)			// model
+	SH V0, 0xC (S0)			// yaw
+	B @@rr_end
+	NOP
+	
+@@octogon:				// need to swap bparams from the rotating octogon
+	SB V0, 0x10 (S0)		// bparam 1
+	SRL V0, V0, 8
+	B @@return
+	SB V0, 0x11 (S0)		// bparam 2
+
+@rr_platforms:
+.dw 0x13004E78		// rotating octogon, 0x1, 0x0-0x3 (randomize speed options too!)
+.dh 0x0100
+.db 0x4, 0x38
+.dw 0x130010D8		// rotating fire platform, 0x0, 0x1
+.dh 0x0001
+.db 0x0, 0x39
+.dw 0x13004E4C		// moving concrete platform, 0x2, 0x0-0x7F
+.dh 0x0200
+.db 0x40, 0x36
+.dw 0x13004B1C		// seesaw platform, 0x0, 0x5
+.dh 0x0005
+.db 0x0, 0x3C
+.dw 0x130054B8		// pendulum, 0x0, 0x0
+.dh 0x0000
+.db 0x0, 0x3E
+.dw 0x13000CFC		// blue elevator, 0x0, 0x5
+.dh 0x0005
+.db 0x0, 0x40
+.dw 0

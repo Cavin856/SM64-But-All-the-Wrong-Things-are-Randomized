@@ -1,0 +1,379 @@
+.orga 0x366B8		// render_game hook, for debugging
+J FD_Debug
+NOP
+
+.orga 0xFBBF8		// Init level hook, 0x8037EE48 level_cmd_init_level (Headersize offset of 0x80283280)
+J FM_Init_Randos
+NOP
+
+.orga 0x66858		// spawned coin
+J FM_Yellow_Or_Blue_Value
+
+.orga 0x21A668		// add NOP to behavior script
+//.dw 0x103E0032
+.dw 0x18000000
+
+.orga 0x6710C		// boo coin
+BEQZ V0, @@yellow
+NOP
+J FM_Boo_Blue
+NOP
+@@yellow:
+J FM_Boo_Yellow
+NOP
+
+.orga 0x66BFC		// coin formation coin
+J FM_Yellow_Value
+
+.orga 0x66704		// yellow coin
+J FM_Yellow_Value
+
+.orga 0x7D424		// blue coin from switch
+J FM_Blue_Value
+
+.orga 0xA0F5C		// moving yellow
+J FM_Yellow_Value
+
+.orga 0xA110C		// moving blue
+J FM_Blue_Value
+
+.orga 0xA1314		// moving jumping blue
+J FM_Blue_Value
+
+.orga 0xADF24		// red coin
+J FM_Red_Value
+
+.orga 0x8B40		// interact_coin
+J FM_Interact_Coin_Alt
+NOP
+
+.orga 0x6EC0		// reset fractional coins
+J FM_Reset_Fractional
+NOP
+
+.orga 0xF1BC		// fractional heal hook
+J FM_Fractional_Heal
+NOP
+
+.orga 0x100068		// hook into the middle of load_environmental_regions
+J FM_Special_Box_Height
+NOP
+
+.orga 0xFFFA0		// hook onto the end of *read_vertex_data
+J FM_Alter_Vertex
+
+.orga 0x11628		// redirect apply_gravity
+J FM_Gravity
+NOP
+
+/*
+.orga 0x25248		// interject check_fall_damage
+J FM_Gravity_Fall_Damage
+NOP
+*/
+
+.orga 0x2553C		// alter should_get_stuck_in_ground
+J FM_Snow_Modifier
+NOP
+
+.orga 0xFC6E4		// interject level_cmd_set_terrain_type
+J FM_Change_Level_Terrain_Type
+NOP
+
+.orga 0xCCBDC		// racing penguin min speed
+J FM_Racing_Speed
+NOP
+
+.orga 0xCCC4C		// racing penguin min speed near end
+J FM_Racing_Speed2
+NOP
+
+.orga 0xFC1E4		// interrupt level_cmd_place_object
+J FM_Modify_Object
+NOP
+
+.orga 0x21C0D0		// jrb rock
+.dw FM_Rock_Rando
+
+.orga 0x67E78		// door init hook
+J BBH_Init_Struct_List
+NOP
+
+.orga 0x96E4		// interact_door hook
+J FM_Use_BBH_Door
+NOP
+
+.orga 0x143C4		// act_going_through_door hook
+J FM_BBH_Door_Height
+NOP
+
+.orga 0x67C00		// door loop interject
+J FM_BBH_Door_Collision
+NOP
+
+.orga 0x1430C		// interject act_going_through_door
+J FF_HMC_Door_Anti_Downwarp
+
+.orga 0x3C18		// thread 5
+J FM_Game_Speed
+
+.orga 0x310C
+JAL FF_Game_Speed_Limit_Skip
+
+.orga 0x3154
+JAL FF_Game_Speed_Limit_Skip
+
+.orga 0xC3F00		// hook onto bhv_mr_blizzard_update
+J FM_Blizzard_Update_Cold
+NOP
+
+.orga 0xB1580		// hook onto bhv_snow_mound_spawn_loop
+J FM_Snow_Waves_Cold
+NOP
+
+.orga 0xFCED8		// hook onto level_cmd_set_mario_start_pos
+J FM_Levelscript_End_Hook
+NOP
+
+.orga 0x7C9F4		// hook onto bhv_exclamation_box_loop
+J FF_Exclamation_Extras
+NOP
+
+.orga 0x36030		// hook onto load_mario_area
+J FM_Change_Area_Hook
+NOP
+
+.orga 0xA6794		// interject bully_step
+J FM_Bully_Cold
+NOP
+
+.orga 0xA2C98		// interject bhv_cannon_closed_init
+J FM_Cannon_Cold
+NOP
+
+.orga 0x95210		// interrupt render_dialog_entries
+J FM_Replace_Textbox
+NOP
+
+.orga 0xF1A0		// interject update_mario_health
+J FM_Cold_Water_Drain
+
+.orga 0x6AD9C		// interject bhv_spindrift_loop
+J FM_Spindrift_Cold
+NOP
+
+.orga 0x6AE30		// interject bhv_spindrift_loop
+J FM_Spindrift_Cold2
+NOP
+
+.orga 0xA92D0		// interject moneybag_jump
+J FM_Moneybag_Cold
+NOP
+
+.orga 0xA98EC		// hook onto bhv_moneybag_loop
+JR RA
+NOP
+
+.orga 0xA93C8		// interject moneybag_jump
+J FM_Moneybag_Cold2
+NOP
+
+.orga 0xA9434		// interject moneybag_jump
+J FM_Moneybag_Cold3
+NOP
+
+.orga 0xA98EC		// hook onto bhv_moneybag_loop
+J FM_Moneybag_Cold4
+NOP
+
+.orga 0x65CC		// hook onto play_mode_normal
+J FM_Background_Functions
+NOP
+
+.orga 0x1BF50		// interject act_idle
+J FM_SL_Fast_Shiver
+LHU T9, 0x1A (T8)
+
+.orga 0x10810		// re-direct mario_update_windy_ground
+J FM_SL_Ground_Wind
+NOP
+
+.orga 0x25638		// re-direct check_horizontal_wind
+J FM_SL_Air_Wind
+NOP
+
+.orga 0x69A20		// interject ukiki cage star spawn
+J FF_TTM_Ukiki_Star
+NOP
+
+// Change floating_platform code to use unused variables for compatibility
+.orga 0xB19AC
+LW T8, 0x98 (T7)
+.orga 0xB15D8
+
+LWC1 F6, 0x1A4 (T8)
+.orga 0xB15F8
+SW R0, 0x98 (T9)
+.orga 0xB1608
+LWC1 F16, 0x1A8 (T0)
+.orga 0xB1628
+SW T1, 0x98 (T2)
+.orga 0xB1638
+LWC1 F6, 0x1A8 (T3)
+.orga 0xB17E0
+
+LWC1 F16, 0x148 (T1)
+.orga 0xB17EC
+SWC1 F18, 0x148 (T1)
+.orga 0xB1800
+LWC1 F8, 0x148 (T6)
+.orga 0xB1828
+SWC1 F6, 0x148 (T5)
+.orga 0xB1884
+LWC1 F16, 0x148 (T0)
+.orga 0xB1898
+SWC1 F4, 0x148 (T0)
+.orga 0xB18C0
+LWC1 F16, 0x148 (T6)
+.orga 0xB18E4
+SWC1 F18, 0x148 (T5)
+.orga 0xB18F4
+LW T2, 0x1AC (T7)
+.orga 0xB1928
+LWC1 F8, 0x148 (T7)
+.orga 0xB1944
+LW T1, 0x1AC (T0)
+.orga 0xB194C
+SW T6, 0x1AC (T0)
+.orga 0xB195C
+LW T2, 0x1AC (T5)
+.orga 0xB1970
+SW R0, 0x1AC (T8)
+
+.orga 0xB19C4
+SB R0, 0x1B0 (T9)
+.orga 0xB19D4
+SB T0, 0x1B0 (T1)
+.orga 0xB19E0
+LBU S0, 0x1B0 (T2)
+
+.orga 0xB191C		// make floating_platform function more variable
+J FM_Floating_Y_Offset
+NOP
+
+.orga 0x21E0A4		// floating wdw square
+.dw FM_Unfloating_Platform
+
+.orga 0x21E0D4		// floating wdw rectangle
+.dw FM_Unfloating_Platform
+
+.orga 0x6CBA8		// large breakable boxes
+J FM_Handle_Floating_General
+ORI A0, R0, 1
+
+.orga 0x6C9D0		// hidden boxes
+J FM_Handle_Floating_General
+ORI A0, R0, 1
+
+.orga 0x6CAD8		// hidden wdw platforms
+J FM_Handle_Floating_General
+ORI A0, R0, 2
+
+.orga 0x6C4EC		// purple switch
+J FM_Handle_Floating_General
+ORI A0, R0, 3
+
+.orga 0xB1D18		// arrow lift
+J FM_Handle_Floating_General
+ORI A0, R0, 5
+
+.orga 0x7BAA4		// elevator express
+J FM_Handle_Floating_General
+ORI A0, R0, 6
+
+.orga 0x21BFDC		// elevator express 2
+.dw FM_Express_Elevator_Platform
+
+.orga 0x7D634		// blue coin switch
+JR RA
+NOP
+
+.orga 0x65940		// rotating platform
+J FM_Handle_Floating_General
+ORI A0, R0, 7
+
+.orga 0x7DCE0		// water level diamond
+J FM_Handle_Floating_General
+ORI A0, R0, 8
+
+.orga 0x7DAA8		// water level diamond init level
+J FM_Random_Diamond_Height
+NOP
+
+//.orga 0x8B1D8		// water level initial height
+//JR RA
+
+.orga 0x8B158		// water level initial height
+J FM_Random_WDW_Initial_Height
+
+.orga 0xBA510		// bhv_goomba_init hook
+J FM_Set_Goomba_Size
+NOP
+
+.orga 0xC7EB8		// bhv_fire_piranha_plant_init
+J FM_Set_Piranha_Size
+NOP
+
+.orga 0xCFA24		// bhv_bubba_loop
+J FM_Set_Bubba_Size
+NOP
+
+.orga 0xB6D54		// bhv_koopa_init
+J FM_Set_General_Size_Refresh
+NOP
+
+.orga 0xB8A20		// bhv_koopa_race_endpoint_update
+J FM_Set_General_Size_Once
+NOP
+
+.orga 0xA9DE8		// bhv_bowling_ball_initialize_loop
+J FM_Set_Ball_Size
+NOP
+
+.orga 0x21D118		// wooden signpost bhv script
+.dw FM_Set_Sign_Size
+
+.orga 0x651B0		// bhv_chuckya_loop
+J FM_Set_General_Size_Refresh
+NOP
+
+.orga 0xBE0A0		// bhv_enemy_lakitu_update
+J FM_Set_General_Size_Once
+NOP
+
+.orga 0xBC140		// bhv_wooden_post_update
+J FM_Set_General_Size_Once
+NOP
+
+.orga 0x21A5D4		// warp pipe bhv script
+.dw FM_Set_Sign_Size
+
+.orga 0xBC4C4		// wiggler
+J FM_Set_General_Size_Refresh
+NOP
+
+.orga 0xA9CB0		// bowling balls loop
+JR RA
+NOP
+
+.orga 0xF3D70		// donut spawn range floats
+.dw 25000000.0
+.dw 5500.0
+
+.orga 0xCE6C4		// hook onto bhv_donut_platform_update
+J FM_Donut_Rotation
+NOP
+
+.orga 0xC0224		// platform on track
+J FM_Randomize_RR_Carpets
+NOP

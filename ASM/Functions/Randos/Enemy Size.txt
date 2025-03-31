@@ -1,0 +1,186 @@
+// THI enemy size rando
+
+FM_Init_Size:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	OR V0, R0, R0
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 13
+	BNE AT, T9, @@end
+	
+	LW T0, 0x80361160
+	LW AT, 0x98 (T0)		// scale
+	BNEZ AT, @@return2
+	NOP
+	LW T9, cTHISizeEnable
+	BEQZ T9, @@end
+	ORI AT, R0, 0x1
+	BEQ AT, T9, @@normal_distribution
+	NOP
+	LI A0, cTHISizeRange
+	JAL FH_Random_Float_Range_From_Config
+	NOP
+@@return:
+	LW T0, 0x80361160
+	SWC1 F0, 0x98 (T0)
+@@return2:
+	ORI V0, R0, 0x1
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@normal_distribution:
+	JAL 0x80383BB0			// random_u16
+	NOP
+	LI T1, 0.25
+	SLL V0, V0, 9
+	ADDU T1, T1, V0			// add random number to float value of 0.25 to get range between 0.25 and 3.99994
+	B @@return
+	MTC1 T1, F0
+
+
+
+FM_Set_General_Size_Refresh:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Init_Size
+	NOP
+	BEQZ V0, @@end
+	
+	LW T0, 0x80361160
+	LWC1 F0, 0x98 (T0)
+	LWC1 F2, 0x2C (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0x2C (T0)
+	LWC1 F2, 0x30 (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0x30 (T0)
+	LWC1 F2, 0x34 (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0x34 (T0)
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+	
+	
+	
+FM_Set_General_Size_Once:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Init_Size
+	NOP
+	BEQZ V0, @@end
+	
+	LW T0, 0x80361160
+	LWC1 F0, 0x98 (T0)
+	SWC1 F0, 0x2C (T0)
+	SWC1 F0, 0x30 (T0)
+	SWC1 F0, 0x34 (T0)
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Set_Goomba_Size:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Init_Size
+	NOP
+	BEQZ V0, @@end
+	
+	LW T0, 0x80361160
+	LWC1 F2, 0xF8 (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0xF8 (T0)
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Set_Piranha_Size:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Init_Size
+	NOP
+	BEQZ V0, @@end
+	
+	LW T0, 0x80361160
+	LWC1 F2, 0xF4 (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0xF4 (T0)
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Set_Bubba_Size:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Init_Size
+	NOP
+	BEQZ V0, @@end
+	
+	LW T0, 0x80361160
+	LWC1 F0, 0x98 (T0)
+	SWC1 F0, 0x2C (T0)
+	SWC1 F0, 0x30 (T0)
+	SWC1 F0, 0x34 (T0)
+	LWC1 F2, 0x200 (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0x200 (T0)
+	LI AT, 200.0
+	MTC1 AT, F2
+	MUL.S F2, F2, F0
+	SWC1 F2, 0x204 (T0)
+	
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Set_Sign_Size:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Set_General_Size_Once
+	NOP
+	LW RA, 0x14 (SP)
+	J 0x803839CC			// normalize
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Set_Ball_Size:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Init_Size
+	NOP
+	BEQZ V0, @@end
+	
+	LW T0, 0x80361160
+	LWC1 F0, 0x98 (T0)
+	LWC1 F2, 0x2C (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0x2C (T0)
+	LWC1 F2, 0x30 (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0x30 (T0)
+	LWC1 F2, 0x34 (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0x34 (T0)
+	LWC1 F2, 0xDC (T0)
+	MUL.S F2, F2, F0
+	SWC1 F2, 0xDC (T0)
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18

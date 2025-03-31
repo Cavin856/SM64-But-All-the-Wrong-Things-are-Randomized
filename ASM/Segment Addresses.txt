@@ -1,0 +1,11 @@
+SEG_3_Generic:		// common objects? wooden signposts, doors, trees, etc?
+.dw 0x00201410
+.dw 0x00218DA0
+
+SEG_5_Snow_Objects:	// spindrift, mr blizzard, penguin
+.dw 0x00160670
+.dw 0x001656E0
+
+SEG_8_Generic:		// exclamation boxes, etc, maybe not generic?
+.dw 0x001F2200
+.dw 0x002008D0

@@ -1,0 +1,37 @@
+.include "ASM/Functions/Debug.txt"
+
+.include "ASM/Functions/Helpers.txt"
+.include "ASM/Functions/Misc.txt"
+
+.include "ASM/Functions/Init Level.txt"
+.include "ASM/Functions/Placed Object.txt"
+
+.include "ASM/Functions/Textbox.txt"
+.include "ASM/Functions/Textbox Data.txt"
+
+.include "ASM/Functions/Background Functions.txt"
+
+.include "ASM/Functions/Segment 7/Call.txt"
+.include "ASM/Functions/Segment 7/BOB.txt"
+.include "ASM/Functions/Segment 7/HMC Loop.txt"
+.include "ASM/Functions/Segment 7/HMC Data.txt"
+.include "ASM/Functions/Segment 7/SSL Fence.txt"
+.include "ASM/Functions/Segment 7/SL Lake.txt"
+.include "ASM/Functions/Segment 7/SL Igloo.txt"
+.include "ASM/Functions/Segment 7/TTM.txt"
+.include "ASM/Functions/Segment 7/TTC.txt"
+
+.include "ASM/Functions/Randos/Coin Value.txt"
+.include "ASM/Functions/Randos/Box Height.txt"
+.include "ASM/Functions/Randos/Gravity.txt"
+.include "ASM/Functions/Randos/Snow Rando.txt"
+.include "ASM/Functions/Randos/Terrain Type.txt"
+.include "ASM/Functions/Randos/Penguin.txt"
+.include "ASM/Functions/Randos/Rocks.txt"
+.include "ASM/Functions/Randos/Doors.txt"
+.include "ASM/Functions/Randos/Game Speed.txt"
+.include "ASM/Functions/Randos/Cold Rando.txt"
+.include "ASM/Functions/Randos/Buoyancy.txt"
+.include "ASM/Functions/Randos/Enemy Size.txt"
+.include "ASM/Functions/Randos/Donut.txt"
+.include "ASM/Functions/Randos/Carpet.txt"

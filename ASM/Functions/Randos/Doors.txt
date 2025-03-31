@@ -1,0 +1,464 @@
+@BBH_Door_Coordinates:
+.dh     0, -2457,  2099, 128
+.dh -1996, -2457,   205, 192
+.dh  1587, -2457,   205,  64
+.dh -2136,  -204,  4527, 224
+.dh     0, -2457,  4659, 128
+.dh  2099,  1741,   486,  64
+.dh   589,  1922,  1894,   0
+.dh   742,  1922,  1894, 128
+.dh -1970,  1024,  1075, 128
+.dh -2021,     0,  1075, 128
+.dh  2099,   819,  1818, 192
+.dh  3354,     0,  1075,   0
+.dh   742,     0,  2099, 128
+.dh   589,     0,  2099,   0
+.dh  2099,     0,  1459, 192
+.dh   179,   819,   -50,   0
+.dh  2099,   819,   486, 192
+.dh   435,     0,   -50,   0
+.dh  1613,     0,   -50,   0
+.dh  1613,   819,   -50,   0
+.dh -1561,     0, -1586,   0
+.dh  -767,   819,  1408,  64
+.dh  -767,   819,   640,  64
+.dh   -50,     0,   640,  64
+.dh   -50,     0,  1459,  64
+.aligna
+
+@BBH_Door_Structs:
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+.dw 0
+
+
+@BBH_Push:
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+
+@BBH_Pull:
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.db 0
+.aligna
+
+@BBH_Lists:
+.dw @BBH_Pull
+.dw @BBH_Push
+
+@sBBHDoorSide: // unused?
+.dw 0
+
+
+
+FM_Randomize_BBH_Doors_Simple:
+	ADDIU SP, SP, -0x20
+	SW RA, 0x1C (SP)
+	SW S0, 0x10 (SP)
+	ORI S0, R0, 25
+@@main_loop:
+	BEQZ S0, @@end
+	NOP	
+	OR A0, R0, S0		// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, 0		// offset, 24 to 0
+	LI T1, @BBH_Push
+	LI T2, @BBH_Pull
+	OR T4, R0, R0		// pull slot ID
+	OR T5, R0, R0		// empty slot count
+@@pull_loop:
+	ADDU T6, T2, T4
+	LB AT, 0x0 (T6)		// check if pull slot ID is already used
+	BGEZ AT, @@skip_slot
+	NOP
+	BEQ T5, V0, @@match_slot
+	NOP
+	ADDIU T5, T5, 1
+@@skip_slot:
+	B @@pull_loop
+	ADDIU T4, T4, 1		// increment pull slot ID
+
+@@match_slot:
+	ADDIU S0, S0, -1	// decrement main loop
+	SB S0, 0x0 (T6)		// push ID
+	ADDU AT, S0, T1
+	B @@main_loop
+	SB T4, 0x0 (AT)		// pull ID
+
+@@end:
+	LW S1, 0x14 (SP)
+	LW S0, 0x10 (SP)
+	LW RA, 0x1C (SP)
+	JR RA
+	ADDIU SP, SP, 0x20
+
+
+
+FM_Clear_BBH_Doors:
+	LI T0, @BBH_Push
+	OR T1, R0, R0
+@@loop:
+	ADDIU AT, R0, -1
+	SW AT, 0x0 (T0)
+	ADDIU T0, T0, 0x4
+	ORI AT, R0, 12
+	BNE AT, T1, @@loop
+	ADDIU T1, T1, 0x1
+	JR RA
+	NOP
+
+
+BBH_Init_Struct_List:
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 0x5
+	BNE AT, T9, @@end
+	NOP
+	LUI T0, 0x8036
+	LW T0, 0x1160 (T0)
+	LI T1, @BBH_Door_Coordinates
+	OR T3, R0, R0
+@@loop:
+	ORI AT, R0, 25
+	BEQ AT, T3, @@end
+	LH T2, 0x0 (T1)			// target x
+	LWC1 F0, 0xA0 (T0)		// object x
+	CVT.W.S F0, F0
+	MFC1 AT, F0
+	BNE AT, T2, @@next_loop
+	LH T2, 0x2 (T1)			// target y
+	LWC1 F0, 0xA4 (T0)		// object x
+	CVT.W.S F0, F0
+	MFC1 AT, F0
+	BNE AT, T2, @@next_loop
+	LH T2, 0x4 (T1)			// target z
+	LWC1 F0, 0xA8 (T0)		// object x
+	CVT.W.S F0, F0
+	MFC1 AT, F0
+	BEQ AT, T2, @@loop_end
+	NOP
+@@next_loop:
+	ADDIU T1, T1, 0x8		// increment coordinate list offset
+	B @@loop
+	ADDIU T3, T3, 0x1		// increment loop counter
+	
+@@loop_end:
+	LI T8, @BBH_Door_Structs
+	SLL AT, T3, 2
+	ADDU T8, T8, AT
+	SW T0, 0x0 (T8)			// store struct in correct slot
+
+@@end:
+	JR RA
+	NOP
+
+
+
+FM_Use_BBH_Door_Simple:
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 0x5
+	BNE AT, T9, @@end
+	NOP
+	
+	LW A1, 0x8 (SP)
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	SW A1, 0x10 (SP)
+	LUI A0, 0x8034
+	JAl 0x8024D804			// should_push_or_pull_door
+	ADDIU A0, A0, 0xB170
+	LW T0, 0x10 (SP)
+	LW RA, 0x14 (SP)
+	ADDIU SP, SP, 0x18
+	
+	LI T1, @BBH_Door_Structs
+	OR T3, R0, R0
+@@loop:
+	ORI AT, R0, 25
+	BEQ AT, T3, @@end
+	LW AT, 0x0 (T1)
+	BEQ T0, AT, @@loop_end
+	NOP
+@@next_loop:
+	ADDIU T1, T1, 0x4		// increment struct list offset
+	B @@loop
+	ADDIU T3, T3, 0x1		// increment loop counter
+	
+@@loop_end:
+	LI T4, @BBH_Lists
+	ADDIU AT, V0, -1
+	SLL AT, AT, 2
+	ADDU T4, T4, AT
+	LW T4, 0x0 (T4)			// push or pull list
+	ADDU AT, T3, T4
+	LBU T4, 0x0 (AT)		// door index
+	SLL T4, T4, 2
+	LI T1, @BBH_Door_Structs
+	ADDU T1, T1, T4			// target door ID
+	LW T5, 0x0 (T1)
+	LUI T9, 0x8034
+	ADDIU T9, T9, 0xB170
+	SW T5, 0x80 (T9)		// m->usedObj
+
+@@end:
+	JR RA				// return
+	NOP
+
+
+
+FM_BBH_Door_Height:
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 0x5
+	BNE AT, T9, @@end
+	NOP
+	LUI T9, 0x8034
+	ADDIU T9, T9, 0xB170
+	LW T1, 0xC (T9)
+	ORI AT, R0, 0x1320
+	BEQ AT, T1, @@update_y
+	ORI AT, R0, 0x1321
+	BNE AT, T1, @@end
+	NOP
+@@update_y:
+	LW T5, 0x80 (T9)		// m->usedObj
+	LW AT, 0xA4 (T5)
+	SW AT, 0x40 (T9)		// set mario's y
+@@end:
+	JR RA				// return
+	NOP
+
+
+
+FM_BBH_Door_Collision:
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 0x5
+	BNE AT, T9, @@end
+	NOP
+	J 0x802ACC14
+	NOP
+
+@@end:
+	LUI T0, 0x8036			// normalize
+	J 0x802ACC08			// return
+	LW T0, 0x1160 (T0)		// normalize
+
+
+
+FM_Randomize_BBH_Doors_Complex:
+	ADDIU SP, SP, -0x28
+	SW RA, 0x24 (SP)
+	ORI S0, R0, 50
+@@main_loop:
+	BEQZ S0, @@end
+	NOP	
+	ORI A0, R0, 50			// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, 0			// offset, 49 to 0
+	SW V0, 0x14 (SP)
+	ORI A0, R0, 50			// max variance
+	JAL FH_Random_Range
+	ORI A1, R0, 0			// offset, 49 to 0
+	LW V1, 0x14 (SP)
+	LI T1, @BBH_Push
+	OR T4, R0, R0			// slot ID
+	OR T5, R0, R0			// empty slot count
+	OR T7, R0, R0			// clear flag
+@@placement_loop:
+	ADDU T6, T1, T4
+	LB AT, 0x00 (T6)		// check if slot ID is already used
+	BGEZ AT, @@skip_slot
+	NOP
+	BEQ T5, V0, @@match_slot_1
+	ADDU T3, T1, T4
+	BEQ T5, V1, @@match_slot_2
+	NOP
+@@next_slot:
+	ADDIU T5, T5, 1			// increment empty slot count
+@@skip_slot:
+	ADDIU T4, T4, 1			// increment slot ID
+	ADDIU AT, T4, -50
+	BEQ AT, T5, @@end		// should only exit if slot ID is 50 and empty slots are 0
+	ORI AT, R0, 50
+	DIVU T4, AT
+	B @@placement_loop
+	MFHI T4				// wrap around if at end of slots
+
+@@match_slot_1:
+	SW T3, 0x10 (SP)
+	B @@match_slots_common
+	SW T4, 0x14 (SP)
+@@match_slot_2:
+	SW T3, 0x18 (SP)
+	SW T4, 0x1C (SP)
+@@match_slots_common:
+	BEQ V0, V1, @@set_slots_same	// check if door randomizes to itself
+	NOP
+	BNEZ T7, @@set_slots
+	NOP
+	B @@next_slot
+	ADDIU T7, R0, 1			// set flag
+
+@@set_slots_same:
+	B @@main_loop
+	SB T4, 0x0 (T3)
+	
+@@set_slots:
+	LW T3, 0x10 (SP)
+	LW AT, 0x1C (SP)
+	SB AT, 0x0 (T3)
+	LW T3, 0x18 (SP)
+	LW AT, 0x14 (SP)
+	B @@main_loop
+	SB AT, 0x0 (T3)
+
+@@end:
+	LW RA, 0x24 (SP)
+	JR RA
+	ADDIU SP, SP, 0x28
+
+
+
+FM_Use_BBH_Door_Complex:
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 0x5
+	BNE AT, T9, @@end
+	NOP
+	
+	LW A1, 0x8 (SP)
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	SW A1, 0x10 (SP)
+	LUI A0, 0x8034
+	JAl 0x8024D804			// should_push_or_pull_door
+	ADDIU A0, A0, 0xB170
+	LW T0, 0x10 (SP)
+	LW RA, 0x14 (SP)
+	ADDIU SP, SP, 0x18
+	
+	LI T1, @BBH_Door_Structs
+	OR T3, R0, R0
+@@loop:
+	ORI AT, R0, 25
+	BEQ AT, T3, @@end
+	LW AT, 0x0 (T1)
+	BEQ T0, AT, @@loop_end
+	NOP
+@@next_loop:
+	ADDIU T1, T1, 0x4		// increment struct list offset
+	B @@loop
+	ADDIU T3, T3, 0x1		// increment loop counter
+	
+@@loop_end:
+	LI T4, @BBH_Lists
+	ADDIU T8, V0, -1
+	SLL AT, T8, 2
+	ADDU T4, T4, AT
+	LW T4, 0x0 (T4)			// push or pull list
+	ADDU AT, T3, T4
+	LBU T4, 0x0 (AT)		// door index
+	ORI AT, R0, 25
+	DIVU T4, AT
+	MFHI T4				// door struct ID
+	MFLO T5				// push or pull
+	ADDIU T5, T5, 0x1
+	LI T9, 0x8033B170
+	SW T5, 0x1C (T9)
+	SLL T4, T4, 2
+	LI T1, @BBH_Door_Structs
+	ADDU T1, T1, T4			// target door ID
+	LW T5, 0x0 (T1)
+	LUI T9, 0x8034
+	ADDIU T9, T9, 0xB170
+	SW T5, 0x80 (T9)		// m->usedObj
+
+@@end:
+	JR RA				// return
+	NOP
+
+
+
+FM_Use_BBH_Door:
+	LW T0, cBBHDoorRando
+	BEQZ T0, @@end
+	ORI AT, R0, 0x1
+	BEQ AT, T0, @@simple
+	ORI AT, R0, 0x2
+	BEQ AT, T0, @@complex
+	NOP
+@@end:
+	JR RA				// return
+	NOP
+	
+@@simple:
+	J FM_Use_BBH_Door_Simple
+	NOP
+	
+@@complex:
+	J FM_Use_BBH_Door_Complex
+	NOP

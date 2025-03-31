@@ -1,0 +1,34 @@
+// Randomizes the racing penguin's speed
+
+@sPenguinSpeed:
+.dw 0
+
+FM_Penguin_Init:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LI AT, 70.0
+	MTC1 AT, F0
+	LW AT, cCCMRaceSpeedEnable
+	BEQZ AT, @@end
+	NOP
+	LI A0, cCCMRaceSpeedRange
+	JAL FH_Random_Float_Range_From_Config
+	NOP
+@@end:
+	SWC1 F0, @sPenguinSpeed
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+FM_Racing_Speed:
+	LWC1 F10, @sPenguinSpeed
+	J 0x80311BE4		// return
+	NOP
+
+FM_Racing_Speed2:
+	LWC1 F4, @sPenguinSpeed
+	LI AT, 10.0
+	MTC1 AT, F2
+	J 0x80311C54		// return
+	SUB.S F4, F4, F2

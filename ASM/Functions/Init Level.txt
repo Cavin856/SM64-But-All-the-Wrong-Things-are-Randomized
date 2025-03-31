@@ -1,0 +1,236 @@
+// Calls various randos on level init
+FM_Init_Randos:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL FM_Reload_Seg3
+	NOP
+	JAL FM_Coin_Rando_Init
+	NOP
+	JAL FM_Snow_Init
+	NOP
+	JAL FM_Gravity_Init
+	NOP
+	JAL FM_Game_Speed_Init
+	NOP
+	JAL FM_Restore_Default_Lower_limits
+	NOP
+	B @@FH_Course_Specific_RNG
+	NOP
+@@end:
+	LW RA, 0x14 (SP)
+	ADDIU SP, SP, 0x18
+	LUI T6, 0x8039			// normalize
+	J 0x8037EE80			// return
+	LW T6, 0xBE28 (T6)		// normalize
+
+
+
+// Generates RNG for various course specific randos
+@@FH_Course_Specific_RNG:
+	LW T0, 0x8033B438		// seg E address
+	LUI AT, 0x8000
+	ADDU T0, T0, AT
+	LHU T0, 0x0 (T0)
+	ORI AT, R0, 0x1B04		// sanity check
+	BEQ AT, T0, @@end
+	NOP
+	
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 1
+	BEQ AT, T9, @@bob
+	ORI AT, R0, 4
+	BEQ AT, T9, @@ccm
+	ORI AT, R0, 5
+	BEQ AT, T9, @@bbh
+	ORI AT, R0, 10
+	BEQ AT, T9, @@sl
+	ORI AT, R0, 12
+	BEQ AT, T9, @@ttm
+	ORI AT, R0, 14
+	BEQ AT, T9, @@ttc
+	ORI AT, R0, 15
+	BEQ AT, T9, @@rr
+	NOP
+	B @@end
+	NOP
+
+@@bob:
+	JAL FM_Bob_Island_Init
+	NOP
+	B @@end
+	NOP
+
+@@ccm:
+	JAL FM_Penguin_Init
+	NOP
+	B @@end
+	NOP
+
+@@bbh:
+	JAL FM_Clear_BBH_Doors
+	NOP
+	LW T0, cBBHDoorRando
+	BEQZ T0, @@end
+	ORI AT, R0, 0x1
+	BEQ AT, T0, @@simple
+	ORI AT, R0, 0x2
+	BEQ AT, T0, @@complex
+	NOP
+	B @@end
+	NOP
+@@simple:
+	JAL FM_Randomize_BBH_Doors_Simple
+	NOP
+	B @@end
+	NOP
+@@complex:
+	JAL FM_Randomize_BBH_Doors_Complex
+	NOP
+	B @@end
+	NOP
+
+@@sl:	
+	JAL FM_Init_Temperature
+	NOP
+	JAL FM_Igloo_Objects
+	NOP
+	JAL FM_Envfx_Cold
+	NOP
+	JAL FM_Green_Tree
+	NOP
+	B @@end
+	NOP
+
+@@ttm:
+	LW AT, cTTMTallEnable
+	BEQZ AT, @@end
+	NOP
+	JAL FM_TTM_Init
+	NOP
+	SW R0, gTTMInit
+	LWC1 F0, gTTMScale
+	LI AT, -11000.0
+	MTC1 AT, F4
+	MUL.S F2, F4, F0
+	C.LE.S F4, F2
+	BC1F @@ttm_branch
+	NOP
+	MOV.S F2, F4			// if scale is too small, then don't update death floor height
+@@ttm_branch:
+	LI T0, 0x8038BB9C		// update lower height limits for death floor, water box, gas, etc
+	SWC1 F2, 0x0 (T0)
+	SWC1 F2, 0x4 (T0)
+	SWC1 F2, 0x8 (T0)
+	SWC1 F2, 0xC (T0)
+	SWC1 F2, 0x10 (T0)
+	LI T0, 0x800FA8E0		// Mario's spawn height?
+	LH AT, 0x0 (T0)			// Y
+	MTC1 AT, F2
+	CVT.S.W F2, F2
+	MUL.S F2, F2, F0
+	CVT.W.S F2, F2
+	MFC1 AT, F2
+	B @@end
+	SH AT, 0x0 (T0)			// Y
+
+@@ttc:
+	LW AT, cTTCRotateEnable
+	BEQZ AT, @@end
+	LI T0, 0x800FA3B8
+	ORI AT, R0, 0x60
+	SB AT, 0x3 (T0)			// change warp type to allow mario to move immediately
+	JAL FM_TTC_Init
+	NOP
+	LI T0, 0x800FA40E		// Mario's spawn position 2?
+	LH A0, 0x0 (T0)
+	LH A1, 0x2 (T0)
+	JAL FM_TTC_Rotate_Point
+	LH A2, 0x4 (T0)
+	LI T0, 0x800FA40E		// Mario's spawn position 2?
+	SH T1, 0x0 (T0)
+	SH T2, 0x2 (T0)
+	B @@end
+	SH T3, 0x4 (T0)
+
+@@rr:
+	JAL FF_House_Window_Cam_Trigger
+	NOP
+	JAL FM_Randomize_Donuts
+	NOP
+	B @@end
+	NOP
+	
+
+FM_Levelscript_End_Hook:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BEQ AT, T9, @@sl
+	NOP
+
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@sl:
+	JAL FM_Handle_SL_Static_Textures
+	NOP
+	JAL FM_SL_Warming
+	NOP
+	B @@end
+	NOP
+
+
+
+FM_Change_Area_Hook:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LH T9, 0x8033BAC6		// gCurrCourseNum
+	ORI AT, R0, 10
+	BEQ AT, T9, @@sl
+	NOP
+
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@sl:
+	JAL FM_Handle_SL_Dynamic_Textures
+	NOP
+	B @@end
+	NOP
+
+
+
+FM_Reload_Seg3:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	LI AT, 0x8033B400
+	LW AT, 0x0C (AT)
+	BEQZ AT, @@end			// break if NULL
+	NOP
+	
+	LI A0, SEG_3_Generic
+	JAL FH_Decompress_Segment
+	ORI A1, R0, 3
+
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_Restore_Default_Lower_limits:
+	LI AT, -11000.0
+	MTC1 AT, F2
+	LI T0, 0x8038BB9C		// update lower height limits for death floor, water box, gas, etc
+	SWC1 F2, 0x0 (T0)
+	SWC1 F2, 0x4 (T0)
+	SWC1 F2, 0x8 (T0)
+	SWC1 F2, 0xC (T0)
+	JR RA
+	SWC1 F2, 0x10 (T0)

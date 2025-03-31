@@ -1,0 +1,261 @@
+// Get vector companants from distance and angle
+// A0:	Angle
+// A1:	Distance (float)
+FH_get_angle_componants:
+	ANDI A0, A0, 0xFFFF	// keep lower half
+	MTC1 A1, F12
+	LUI A1, 0x8038
+	SRA AT, A0, 4
+	SLL AT, AT, 2
+	ADDU AT, A1, AT
+	LWC1 F0, 0x6000 (AT)	// Get Sine Ratio
+	LWC1 F2, 0x7000 (AT)	// Get Cosine Ratio
+	MFC1 A1, F12
+	MUL.S F0, F0, F12
+	JR RA
+	MUL.S F2, F2, F12
+
+
+
+// Returns random number in range [A1] to [A0]+[A1]-1 inclusive
+FH_Random_Range:
+	ADDIU SP, SP, -0x20
+	SW RA, 0x1C (SP)
+	SW A0, 0x10 (SP)
+	JAL 0x80383CB4			// random_float
+	SW A1, 0x14 (SP)
+	LWC1 F2, 0x10 (SP)
+	CVT.S.W F2, F2
+	MUL.S F4, F2, F0
+	FLOOR.W.S F6, F4
+	MFC1 V0, F6
+	LW AT, 0x14 (SP)
+	ADDU V0, V0, AT
+	LW RA, 0x1C (SP)
+	JR RA
+	ADDIU SP, SP, 0x20
+
+// Returns random float in range [A1] to [A0]+[A1] exclusive
+FH_Random_Range_Float:
+	ADDIU SP, SP, -0x20
+	SW RA, 0x1C (SP)
+	SW A0, 0x10 (SP)
+	SW A1, 0x14 (SP)
+	JAL 0x80383CB4			// random_float
+	NOP
+	LWC1 F2, 0x10 (SP)
+	LWC1 F4, 0x14 (SP)
+	MUL.S F0, F0, F2
+	ADD.S F0, F0, F4
+	LW RA, 0x1C (SP)
+	JR RA
+	ADDIU SP, SP, 0x20
+
+// Takes a min and max from the config file and returns a random number in between
+// A0: pointer to range
+FH_Random_Range_From_Config:
+	ADDIU SP, SP, -0x20
+	SW RA, 0x1C (SP)
+	
+	LH A1, 0x2 (A0)
+	LH A0, 0x0 (A0)
+	SUBU A0, A0, A1
+	JAL FH_Random_Range
+	ADDIU A0, A0, 0x1
+	
+	LW RA, 0x1C (SP)
+	JR RA
+	ADDIU SP, SP, 0x20
+
+// Takes a min and max from the config file and returns a random float in between
+// A0: pointer to range
+FH_Random_Float_Range_From_Config:
+	ADDIU SP, SP, -0x20
+	SW RA, 0x1C (SP)
+	
+	JAL 0x80383CB4			// random_float
+	NOP
+	LW AT, 0x0 (A0)			// max
+	MTC1 AT, F2
+	LW AT, 0x4 (A0)			// min
+	MTC1 AT, F4
+	SUB.S F2, F2, F4
+	MUL.S F0, F0, F2
+	ADD.S F0, F0, F4
+	
+	LW RA, 0x1C (SP)
+	JR RA
+	ADDIU SP, SP, 0x20
+
+
+
+// Checks the config for if a course has a certain rando enabled
+// A0: pointer to course struct in config (which rando to check)
+FH_Check_Config_Enabled_Courses:
+	LH AT, 0x8033BAC6		// gCurrCourseNum
+	ADDU A0, A0, AT
+	JR RA
+	LBU V0, 0x0 (A0)		// current level in config
+
+
+
+
+// Takes an RGBA16 texture and alters the hue by some amount
+// V0: pointer to texture start
+// V1: pointer to texture end (exclusive)
+// A1, A2, A3: amount to add to RGB color value
+FH_Alter_Texture_Hue:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+@@loop:
+	BEQ V0, V1, @@end
+	LHU T0, 0x0 (V0)		// RGBA, 5/5/5/1
+	SRL T1, T0, 11
+	SRL T2, T0, 6
+	SRL T3, T0, 1
+	ANDI T1, T1, 0x1F
+	ANDI T2, T2, 0x1F
+	ANDI T3, T3, 0x1F
+	ADDU T1, T1, A1
+	ADDU T2, T2, A2
+	ADDU T3, T3, A3
+	ANDI T5, T0, 0x1		// preserve alpha bit
+	
+	JAL @@check_min_max
+	OR T4, R0, T1
+	OR T1, R0, T4
+	JAL @@check_min_max
+	OR T4, R0, T2
+	OR T2, R0, T4
+	JAL @@check_min_max
+	OR T4, R0, T3
+	OR T3, R0, T4
+	
+	SLL T1, T1, 11
+	SLL T2, T2, 6
+	SLL T3, T3, 1
+	OR T0, T1, T2
+	OR T0, T0, T3
+	OR T0, T0, T5			// restore alpha bit
+	SH T0, 0x0 (V0)
+	B @@loop
+	ADDIU V0, V0, 0x2
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+@@check_min_max:
+	BGEZ T4, @@min
+	ADDIU AT, T4, -31
+	ORI T4, R0, 0
+	@@min:
+	BLEZ AT, @@max
+	NOP
+	ORI T4, R0, 31
+	@@max:
+	JR RA
+	NOP
+
+
+
+// Parses a Tex_Alter struct for FH_Alter_Texture_Hue
+// A0: struct pointer
+FH_Parse_Alter_Tex_Struct:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	OR T9, R0, A0
+	JAL FH_Seg_to_Virtual
+	LW A0, 0x4 (T9)
+	OR V1, R0, V0
+	JAL FH_Seg_to_Virtual
+	LW A0, 0x0 (T9)
+	LB A1, 0x8 (T9)
+	LB A2, 0x9 (T9)
+	JAL FH_Alter_Texture_Hue
+	LB A3, 0xA (T9)
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+// Replaces a light struct with our own
+// A0: struct pointer (if diffuse count is 0, just write it as 1 in struct with diffuse values all )
+FH_Alter_Lights:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	OR T9, R0, A0
+	LW T0, 0x0 (T9)
+	JAL FH_Seg_to_Virtual
+	LW A0, 0x0 (T9)
+	OR T1, R0, R0
+	LBU T2, 0x7 (T9)		// loop count
+	LI T3, 0xFFFFFF00		// filter out the last bit, shouldn't need to but just in case
+	LW AT, 0x4 (T9)			// ambient light
+	AND AT, AT, T3
+	SW AT, 0x0 (V0)
+	SW AT, 0x4 (V0)
+@@loop:
+	ADDIU T9, T9, 0x8
+	ADDIU V0, V0, 0x8
+	LW AT, 0x0 (T9)			// diffuse light
+	AND AT, AT, T3
+	SW AT, 0x0 (V0)
+	SW AT, 0x4 (V0)
+	LW AT, 0x4 (T9)
+	AND AT, AT, T3
+	SW AT, 0x8 (V0)
+	ADDIU T1, R0, 0x1
+	BNE T1, T2, @@loop
+	ADDIU V0, V0, 0x4		// need to split this offset in two because of how the structs are set up
+@@end:
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+// My version of [0x80277F50, segmented_to_virtual] that doesn't affect common registers
+// A0: segmented address
+FH_Seg_to_Virtual:
+	LI AT, 0x8033B400		// segment table
+	SRL V0, A0, 24
+	SLL V0, V0, 2
+	ADDU AT, AT, V0			// target segment
+	LW V0, 0x0 (AT)			// segment address
+	LI AT, 0x00FFFFFF
+	AND AT, A0, AT
+	ADDU V0, V0, AT			// add segment address to offset
+	LUI AT, 0x8000
+	JR RA
+	ADDU V0, V0, AT			// add virtual offset?
+
+
+
+// Loads and decompresses a segment
+// A0: struct of ROM pointers
+// A1: segment to load in
+FH_Decompress_Segment:
+	ADDIU SP, SP, -0x20
+	SW RA, 0x1C (SP)
+	SW A1, 0x14 (SP)
+	LW A1, 0x0 (A0)			// ROM start
+	LW A2, 0x4 (A0)			// ROM end
+	SUBU T0, A2, A1			// size
+	LUI A0, 0x807C			// the edge of our ASM, use the space before as a mem pool
+	SUBU A0, A0, T0			// allocate the temp mem pool size
+	JAL 0x80278504			// dma_read
+	SW A0, 0x10 (SP)
+	LW A1, 0x14 (SP)		// segment number
+	SLL A1, A1, 2
+	LI AT, 0x8033B400
+	ADDU AT, AT, A1
+	LW A1, 0x0 (AT)			// [dest] = segment [A1]
+	LUI AT, 0x8000
+	ADDU A1, A1, AT
+	JAL 0x8027F4E0			// load_segment_decompress
+	LW A0, 0x10 (SP)		// [compressed] = temp mem pool
+	LW RA, 0x1C (SP)
+	JR RA
+	ADDIU SP, SP, 0x20

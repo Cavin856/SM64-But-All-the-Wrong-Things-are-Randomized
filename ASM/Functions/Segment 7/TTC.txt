@@ -1,0 +1,227 @@
+@geo_seg_addresses:
+.dw 0x1078	// start
+.dw 0x89A8	// end
+.dw 0xAEF0	// start
+.dw 0xB110	// end
+.dw 0xB238	// start
+.dw 0xDC98	// end
+
+.dw -1
+
+
+
+@random_pitch:
+.dh 0x0000
+
+@random_yaw:
+.dh 0x0000
+
+@from_triple:
+.dw 0
+.dw 0
+.dw 0
+
+@to_triple:
+.dw 50.0
+.dw 100.0
+.dw 20.0
+
+@rotation_struct:
+.dw 0		// x float
+.dw 0		// y float
+.dw 0		// z float
+.dw 0		// zx dist
+
+.dw 0		// zy dist
+.dh 0		// zx yaw
+.dh 0		// zy pitch
+.dw 0		// adjusted z float
+.dw 0		// return x float
+
+.dw 0		// return y float
+.dw 0		// return z float
+
+
+gTTCInit:
+.dw 0
+
+
+FM_TTC_Init:
+	ADDIU SP, SP, -0x18
+	SW RA, 0x14 (SP)
+	JAL 0x80383BB0			// random_u16
+	NOP
+	SH V0, @random_pitch
+	JAL 0x80383BB0			// random_u16
+	NOP
+	SH V0, @random_yaw
+	LW RA, 0x14 (SP)
+	JR RA
+	ADDIU SP, SP, 0x18
+
+
+
+FM_TTC_Rotate_Point:
+	ADDIU SP, SP, -0x30
+	SW RA, 0x1C (SP)
+	SW S0, 0x20 (SP)
+	LI S0, @rotation_struct
+	
+	MTC1 A0, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x0 (S0)
+	MTC1 A1, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x4 (S0)
+	SWC1 F0, 0x20 (S0)
+	MTC1 A2, F0
+	CVT.S.W F0, F0
+	SWC1 F0, 0x8 (S0)
+	
+	LI A0, @from_triple
+	JAL 0x8028ACCC			// calc_hor_dist
+	OR A1, R0, S0
+	SWC1 F0, 0xC (S0)
+	LI A0, @from_triple
+	JAL 0x8028AAD8			// calculate_yaw
+	OR A1, R0, S0
+	SH V0, 0x14 (S0)
+	
+	LHU A0, 0x14 (S0)
+	LHU AT, @random_yaw
+	ADDU A0, A0, AT
+	JAL FH_get_angle_componants
+	LW A1, 0xC (S0)
+	SWC1 F0, 0x1C (S0)		// x
+	SWC1 F2, 0x18 (S0)		// z
+	SWC1 F2, 0x24 (S0)		// z
+	
+	LI A0, @from_triple
+	JAL 0x8028ACCC			// calc_hor_dist
+	ADDIU A1, S0, 0x18
+	
+	SWC1 F0, 0x10 (S0)
+	LI A0, @from_triple
+	JAL 0x8028AAD8			// calculate_yaw
+	ADDIU A1, S0, 0x18
+	SH V0, 0x16 (S0)
+	
+	LHU A0, 0x16 (S0)
+	LHU AT, @random_pitch
+	ADDU A0, A0, AT
+	JAL FH_get_angle_componants
+	LW A1, 0x10 (S0)
+	SWC1 F0, 0x24 (S0)		// z
+	SWC1 F2, 0x20 (S0)		// y
+	
+	LWC1 F0, 0x1C (S0)
+	CVT.W.S F0, F0
+	MFC1 T1, F0
+	LWC1 F0, 0x20 (S0)
+	CVT.W.S F0, F0
+	MFC1 T2, F0
+	LWC1 F0, 0x24 (S0)
+	CVT.W.S F0, F0
+	MFC1 T3, F0
+	
+	LW S0, 0x20 (SP)
+	LW RA, 0x1C (SP)
+	JR RA
+	ADDIU SP, SP, 0x30
+
+
+
+FM_Seg7_TTC:
+	LHU T0, 0x0 (T6)		// sanity check
+	ORI AT, R0, 0x2DA
+	ADDIU SP, SP, -0x48
+	SW RA, 0x40 (SP)
+	SW V0, 0x14 (SP)
+	SW V1, 0x18 (SP)
+	SW S0, 0x34 (SP)
+	BNE AT, T0, @end
+	SW S1, 0x38 (SP)
+	LW AT, cTTCRotateEnable
+	BEQZ AT, @end
+	NOP
+	//B @generate_angles
+	B @col_init
+	//JAL FM_TTC_Rotate_Point
+	NOP
+@end:
+	LW S1, 0x38 (SP)
+	LW S0, 0x34 (SP)
+	LW V1, 0x18 (SP)
+	LW V0, 0x14 (SP)
+	LW RA, 0x40 (SP)
+	JR RA				// return
+	ADDIU SP, SP, 0x48
+
+
+
+@col_init:
+	LI S0, 0x8010D1E4		// ttc seg7 vertices
+	OR S1, R0, R0
+@col_loop:
+	ORI AT, R0, 0x2DA
+	BEQ AT, S1, @geo_init
+	LH A0, 0x0 (S0)
+	LH A1, 0x2 (S0)
+	JAL FM_TTC_Rotate_Point
+	LH A2, 0x4 (S0)
+	SH T1, 0x0 (S0)
+	SH T2, 0x2 (S0)
+	SH T3, 0x4 (S0)
+	ADDIU S0, S0, 0x6
+	B @col_loop
+	ADDIU S1, S1, 0x1
+
+
+
+@geo_init:
+	LI T9, @geo_seg_addresses
+	SW T9, 0x3C (SP)
+@geo_loop:
+	LW T9, 0x3C (SP)
+	LW T2, 0x0 (T9)			// segment offset start
+	BLTZ T2, @macro_object_init
+	NOP
+	LW T3, 0x4 (T9)			// segment offset end
+	LW T0, 0x8033B41C		// segment 7 location
+	LUI AT, 0x8000
+	ADDU AT, AT, T0			// segment 7
+	ADDU S0, AT, T2			// range start address
+	ADDU S1, AT, T3			// range end address
+	ADDIU T9, T9, 0x8		// increment geo section pointer
+	SW T9, 0x3C (SP)
+@geo_subloop:
+	BEQ S0, S1, @geo_loop
+	NOP				// technically I could save this by loading T9 here but for organization I won't
+	LH A0, 0x0 (S0)
+	LH A1, 0x2 (S0)
+	JAL FM_TTC_Rotate_Point
+	LH A2, 0x4 (S0)
+	SH T1, 0x0 (S0)
+	SH T2, 0x2 (S0)
+	SH T3, 0x4 (S0)
+	B @geo_subloop
+	ADDIU S0, S0, 0x10
+
+
+
+@macro_object_init:
+	LI S0, 0x801109D4		// ttc macro objs start
+	OR S1, R0, R0
+@macro_object_loop:
+	ORI AT, R0, 110
+	BEQ AT, S1, @end
+	LH A0, 0x2 (S0)
+	LH A1, 0x4 (S0)
+	JAL FM_TTC_Rotate_Point
+	LH A2, 0x6 (S0)
+	SH T1, 0x2 (S0)
+	SH T2, 0x4 (S0)
+	SH T3, 0x6 (S0)
+	ADDIU S1, S1, 0x1
+	B @macro_object_loop
+	ADDIU S0, S0, 0xA
